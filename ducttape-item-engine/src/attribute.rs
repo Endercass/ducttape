@@ -1,0 +1,269 @@
+use std::collections::HashMap;
+
+use valence_text::{color::NamedColor, Color, IntoText, Text};
+
+#[derive(Clone)]
+pub enum AttributeReason {
+    Hidden,
+    Display {
+        name: Text,
+    }
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+pub enum AttributeType {
+    /// How much damage the item can deal
+    Sharpness,
+    /// How much damage the item can take 
+    Durability,
+    /// How much the item weighs
+    Weight,
+    /// How much weight you can be supported
+    Strength,
+    /// How fast you can move
+    Agility,
+    /// How fast you can attack
+    Speed,
+}
+
+#[derive(Clone)]
+pub struct Attribute {
+    pub uuid: uuid::Uuid,
+    pub reason: AttributeReason,
+    pub priority: u8,
+    pub modifier: AttributeModifier,
+}
+
+#[derive(Clone)]
+pub enum AttributeModifier {
+    Multiply(f64),
+    Add(f64),
+    Set(f64),
+}
+
+impl AttributeModifier {
+    pub fn is_buff(&self) -> bool {
+        match self {
+            AttributeModifier::Multiply(m) => {
+                *m > 1.0
+            },
+            AttributeModifier::Add(a) => {
+                *a > 0.0
+            },
+            AttributeModifier::Set(_) => {
+                false
+            }
+        }
+    }
+
+    pub fn is_neutral(&self) -> bool {
+        match self {
+            AttributeModifier::Multiply(m) => {
+                *m == 1.0
+            },
+            AttributeModifier::Add(a) => {
+                *a == 0.0
+            },
+            AttributeModifier::Set(_) => {
+                true
+            }
+        }
+    }
+
+    pub fn is_debuff(&self) -> bool {
+        match self {
+            AttributeModifier::Multiply(m) => {
+                *m < 1.0
+            },
+            AttributeModifier::Add(a) => {
+                *a < 0.0
+            },
+            AttributeModifier::Set(_) => {
+                false
+            }
+        }
+    }
+
+    pub fn stat_color(&self) -> NamedColor {
+        if self.is_buff() {
+            NamedColor::Green
+        } else if self.is_neutral() {
+            NamedColor::Yellow
+        } else if self.is_debuff() {
+            NamedColor::Red
+        } else {
+            NamedColor::White
+        }
+    }
+}
+
+impl std::fmt::Display for AttributeModifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AttributeModifier::Multiply(m) => {
+                write!(f, " x {}", m)
+            },
+            AttributeModifier::Add(a) => {
+                if *a > 0.0 {
+                    write!(f, " + {}", a)
+                } else {
+                    write!(f, " - {}", a.abs())
+                }
+            },
+            AttributeModifier::Set(s) => {
+                write!(f, " = {}", s)
+            }
+        }
+    }
+}
+
+
+impl<'a> IntoText<'a> for AttributeModifier {
+    fn into_cow_text(self) -> std::borrow::Cow<'a, Text> {
+        format!("{}", self).into_text().color(Color::Named(self.stat_color())).into_cow_text()
+    }
+}
+
+impl<'a> IntoText<'a> for AttributeType {
+    fn into_cow_text(self) -> std::borrow::Cow<'a, Text> {
+        (match self {
+            AttributeType::Sharpness => "🗡️",
+            AttributeType::Durability => "⚡",
+            AttributeType::Weight => "🏋️",
+            AttributeType::Strength => "💪",
+            AttributeType::Agility => "🏃",
+            AttributeType::Speed => "🏹",
+        }).into_cow_text()
+    }
+}
+
+impl<'a> IntoText<'a> for Attribute {
+    fn into_cow_text(self) -> std::borrow::Cow<'a, Text> {
+        let mut txt = self.modifier.into_text();
+        match self.reason {
+            AttributeReason::Display { name, } => {
+                txt = txt + " (" + name + ")";
+            }
+            _ => {
+            }
+        }
+
+        txt.into_cow_text()
+    }
+}
+
+
+/// Helper struct for aggregatijng attributes
+#[derive(Clone)]
+pub struct AttributeParser {
+    attributes: HashMap<
+        AttributeType,
+        Vec<Attribute>
+    >
+}
+
+impl From<HashMap<AttributeType, Vec<Attribute>>> for AttributeParser {
+    fn from(attributes: HashMap<AttributeType, Vec<Attribute>>) -> Self {
+        AttributeParser {
+            attributes
+        }
+    }
+}
+
+impl AttributeParser {
+    pub fn new() -> Self {
+        AttributeParser {
+            attributes: HashMap::new()
+        }
+    }
+
+    pub fn push(&mut self, at: AttributeType, attribute: Attribute) {
+        let vec = self.attributes.entry(at).or_insert(Vec::new());
+        vec.push(attribute);
+        self.sort();
+    }
+
+    fn sort(&mut self) {
+        for (_, vec) in self.attributes.iter_mut() {
+            vec.sort_by(|a, b| a.priority.cmp(&b.priority));
+        }
+    }
+    
+
+    pub fn aggregate_to_value(&self, at: AttributeType) -> f64 {
+        let mut value = 0.0;
+        if let Some(vec) = self.attributes.get(&at) {
+            for attribute in vec.iter() {
+                match attribute.modifier {
+                    AttributeModifier::Multiply(m) => {
+                        value *= m;
+                    },
+                    AttributeModifier::Add(a) => {
+                        value += a;
+                    },
+                    AttributeModifier::Set(s) => {
+                        value = s;
+                    }
+                }
+            }
+        }
+        value
+    }
+
+    pub fn aggregate_to_values(&self) -> HashMap<AttributeType, f64> {
+        let mut result = HashMap::new();
+        for (at, _) in self.attributes.iter() {
+            result.insert(*at, self.aggregate_to_value(*at));
+        }
+        result
+    }
+
+    pub fn aggregate_to_fixed_attribute(&self, at: AttributeType) -> Attribute {
+        Attribute {
+            uuid: uuid::Uuid::new_v4(),
+            reason: AttributeReason::Hidden,
+            priority: 0,
+            modifier: AttributeModifier::Set(self.aggregate_to_value(at)),
+        }
+    }
+
+    pub fn aggregate_to_fixed_attributes(&self) -> HashMap<AttributeType, Attribute> {
+        self.attributes.iter().map(|(at, _)| {
+            (*at, self.aggregate_to_fixed_attribute(*at))
+        }).collect()
+    }
+
+    pub fn aggregate_to_component(&self, at: AttributeType) -> Text {
+        let mut txt = "".into_text();
+        if let Some(vec) = self.attributes.get(&at) {
+            for attribute in vec.iter() {
+                txt = txt + attribute.clone() + "\n";
+            }
+        }
+        txt + self.aggregate_to_fixed_attribute(at) + " (✨)"
+    }
+
+    pub fn aggregate_to_components(&self) -> HashMap<AttributeType, Text> {
+        self.attributes.iter().map(|(at, _)| {
+            (*at, self.aggregate_to_component(*at))
+        }).collect()
+    }
+}
+
+impl<'a> IntoText<'a> for AttributeParser {
+    fn into_cow_text(self) -> std::borrow::Cow<'a, Text> {
+        let mut txt = "".into_text();
+
+        self.aggregate_to_components().iter().for_each(|(at, c)| {
+            txt = txt.clone()
+                + at.clone()
+                + ": " 
+                + "\n"
+                + c.clone()
+                + "\n";
+        });
+
+        txt.into_cow_text()
+    }
+}
+
