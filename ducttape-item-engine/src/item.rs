@@ -11,6 +11,8 @@ pub trait Item<THook = DummyHook> {
     fn get_name(&self) -> Text;
     /// Get the item's stats. (This will be the final stats after component attributes, if present, and from the item's base stats)
     fn get_stats(&self) -> Box<dyn Stats>;
+    /// Get the item's stats mutable.
+    fn get_stats_mut(&mut self) -> &mut dyn Stats;
     /// Get the item's special abilities. (This will be the final special abilities after component attributes, if present, and from the item's base special abilities)
     fn get_special_abilities(&self) -> Vec<Box<dyn SpecialAbility<THook>>>;
     /// Color of the item (This will eventually be a more robust texture system but for now no rendering will happen in the item engine)
@@ -40,4 +42,46 @@ pub trait Stats {
 
     fn remove_attribute(&mut self, at: AttributeType, id: uuid::Uuid);
     fn remove_attributes(&mut self, at: AttributeType);
+}
+
+pub mod macros {
+    #[macro_export]
+    /// Take a struct implementing Item and a f32 to construct a base attribute
+    macro_rules! base_attribute {
+        ($item:expr, $value:expr) => {
+            crate::attribute::Attribute {
+                uuid: uuid::Uuid::new_v4(),
+                reason: crate::attribute::AttributeReason::Display { name: $item.get_name() },
+                priority: 0,
+                modifier: crate::attribute::AttributeModifier::Set($value),
+            }
+        };
+    }
+
+    #[macro_export]
+    /// Add a base attribute to an item
+    macro_rules! add_base_attribute {
+        ($item:expr, $at:expr, $value:expr) => {
+            let name = $item.get_name();
+            
+            $item.get_stats_mut().push_attribute($at, 
+                crate::attribute::Attribute {
+                    uuid: uuid::Uuid::new_v4(),
+                    reason: crate::attribute::AttributeReason::Display { name },
+                    priority: 0,
+                    modifier: crate::attribute::AttributeModifier::Set($value),
+                }
+            );
+        };
+    }
+
+    #[macro_export]
+    /// Add a set of base attributes to an item
+    macro_rules! add_base_attributes {
+        ($item:expr, { $($at:expr => $value:expr),* }) => {
+            $(
+                add_base_attribute!($item, $at, $value);
+            )*
+        };
+    }
 }

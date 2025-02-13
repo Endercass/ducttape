@@ -1,14 +1,35 @@
 use std::collections::HashMap;
 
-use valence_text::{IntoText, Text};
+use valence_text::Text;
 
-use crate::{item::{Item, SpecialAbility, Stats}, attribute::{Attribute, AttributeModifier, AttributeReason, AttributeType}};
+use crate::{add_base_attribute, add_base_attributes, attribute::{Attribute, AttributeType}, item::{Item, SpecialAbility, Stats}};
 
-pub struct Rock;
+pub struct Rock {
+    stats: RockStats,
+}
 
 impl Rock {
     pub fn new() -> Self {
-        Rock
+        let stats = RockStats::new();
+        let mut rock = Rock {
+            stats,
+        };
+
+        rock.populate();
+
+        rock
+    }
+
+    pub fn populate(&mut self) {
+        add_base_attributes!(self,
+            {
+                AttributeType::Durability => 50.0,
+                AttributeType::Weight =>      5.0,
+                AttributeType::Strength =>   10.0,
+                AttributeType::Agility =>     5.0,
+                AttributeType::Speed =>       5.0
+            }
+        );
     }
 }
 
@@ -21,6 +42,7 @@ mod tests {
     #[test]
     fn rock_attrs() {
         let rock = Rock::new();
+
         let stats = rock.get_stats();
         let parser = AttributeParser::from(stats.get_all_attributes());
 
@@ -40,7 +62,11 @@ impl Item for Rock {
     }
 
     fn get_stats(&self) -> Box<dyn Stats> {
-        Box::new(RockStats::default())
+        Box::new(self.stats.clone())
+    }
+
+    fn get_stats_mut(&mut self) -> &mut dyn Stats {
+        &mut self.stats
     }
 
     fn get_special_abilities(&self) -> Vec<Box<dyn SpecialAbility<()>>> {
@@ -102,42 +128,10 @@ impl Stats for RockStats {
         self.attributes.remove(&at);
     }
 }
-impl Default for RockStats {
-    fn default() -> Self {
-        let mut attributes = HashMap::new();
-        attributes.insert(AttributeType::Durability, vec![
-            Attribute {
-                uuid: uuid::Uuid::new_v4(),
-                reason: AttributeReason::Display { 
-                    name: "🪨".into_text(), 
-                },
-                priority: 0,
-                modifier: AttributeModifier::Set(50.0),
-            }
-        ]);
-        attributes.insert(AttributeType::Weight, vec![
-            Attribute {
-                uuid: uuid::Uuid::new_v4(),
-                reason: AttributeReason::Display { 
-                    name: "🪨".into_text(), 
-                },
-                priority: 0,
-                modifier: AttributeModifier::Set(5.0),
-            }
-        ]);
-        attributes.insert(AttributeType::Strength, vec![
-            Attribute {
-                uuid: uuid::Uuid::new_v4(),
-                reason: AttributeReason::Display { 
-                    name: "🪨".into_text(), 
-                },
-                priority: 0,
-                modifier: AttributeModifier::Set(10.0),
-            }
-        ]);
-
+impl RockStats {
+    fn new() -> Self {
         RockStats {
-            attributes,
+            attributes: HashMap::new(),
         }
     }
 }

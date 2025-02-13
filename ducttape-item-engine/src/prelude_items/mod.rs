@@ -4,7 +4,7 @@ pub mod rock;
 mod tests {
     use valence_text::{IntoText, Text};
 
-    use crate::{item::{Item, SpecialAbility, Stats}, text_renderer::ansi_renderer::AnsiRenderer, attribute::{AttributeParser, Attribute, AttributeModifier, AttributeReason, AttributeType}};
+    use crate::{attribute::{Attribute, AttributeModifier, AttributeParser, AttributeReason, AttributeType}, item::{Item, SpecialAbility, Stats}, text_renderer::ansi_renderer::AnsiRenderer};
     use std::collections::HashMap;
 
     pub struct Ball {
@@ -28,6 +28,10 @@ mod tests {
     
         fn get_stats(&self) -> Box<dyn Stats> {
             Box::new(self.stats.clone())
+        }
+
+        fn get_stats_mut(&mut self) -> &mut dyn Stats {
+            &mut self.stats
         }
     
         fn get_special_abilities(&self) -> Vec<Box<dyn SpecialAbility<()>>> {
