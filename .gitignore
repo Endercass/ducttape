@@ -1,1 +1,13 @@
 /target
+
+/ducttape-godot/.godot/
+
+/ducttape-godot/.import/
+/ducttape-godot/export.cfg
+/ducttape-godot/export_presets.cfg
+
+/ducttape-godot/*.translation
+
+/ducttape-godot/.mono/
+/ducttape-godot/data_*/
+/ducttape-godot/mono_crash.*.json
