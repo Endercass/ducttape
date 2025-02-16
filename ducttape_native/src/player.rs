@@ -1,6 +1,5 @@
-use std::{cell::Ref, thread, time::Duration};
 
-use godot::{classes::{AnimatedSprite2D, Area2D, CharacterBody2D, IArea2D, ICharacterBody2D, InputEvent}, prelude::*};
+use godot::{classes::{CharacterBody2D, ICharacterBody2D, InputEvent}, prelude::*};
 
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]

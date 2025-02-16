@@ -140,12 +140,8 @@ impl<'a> IntoText<'a> for AttributeType {
 impl<'a> IntoText<'a> for Attribute {
     fn into_cow_text(self) -> std::borrow::Cow<'a, Text> {
         let mut txt = self.modifier.into_text();
-        match self.reason {
-            AttributeReason::Display { name, } => {
-                txt = txt + " (" + name + ")";
-            }
-            _ => {
-            }
+        if let AttributeReason::Display { name, } = self.reason {
+            txt = txt + " (" + name + ")";
         }
 
         txt.into_cow_text()
@@ -170,6 +166,12 @@ impl From<HashMap<AttributeType, Vec<Attribute>>> for AttributeParser {
     }
 }
 
+impl Default for AttributeParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AttributeParser {
     pub fn new() -> Self {
         AttributeParser {
@@ -178,7 +180,7 @@ impl AttributeParser {
     }
 
     pub fn push(&mut self, at: AttributeType, attribute: Attribute) {
-        let vec = self.attributes.entry(at).or_insert(Vec::new());
+        let vec = self.attributes.entry(at).or_default();
         vec.push(attribute);
         self.sort();
     }
@@ -228,7 +230,7 @@ impl AttributeParser {
     }
 
     pub fn aggregate_to_fixed_attributes(&self) -> HashMap<AttributeType, Attribute> {
-        self.attributes.iter().map(|(at, _)| {
+        self.attributes.keys().map(|at| {
             (*at, self.aggregate_to_fixed_attribute(*at))
         }).collect()
     }
@@ -244,7 +246,7 @@ impl AttributeParser {
     }
 
     pub fn aggregate_to_components(&self) -> HashMap<AttributeType, Text> {
-        self.attributes.iter().map(|(at, _)| {
+        self.attributes.keys().map(|at| {
             (*at, self.aggregate_to_component(*at))
         }).collect()
     }
@@ -256,7 +258,7 @@ impl<'a> IntoText<'a> for AttributeParser {
 
         self.aggregate_to_components().iter().for_each(|(at, c)| {
             txt = txt.clone()
-                + at.clone()
+                + *at
                 + ": " 
                 + "\n"
                 + c.clone()

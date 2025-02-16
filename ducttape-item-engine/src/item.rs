@@ -49,11 +49,11 @@ pub mod macros {
     /// Take a struct implementing Item and a f32 to construct a base attribute
     macro_rules! base_attribute {
         ($item:expr, $value:expr) => {
-            crate::attribute::Attribute {
+            $crate::attribute::Attribute {
                 uuid: uuid::Uuid::new_v4(),
-                reason: crate::attribute::AttributeReason::Display { name: $item.get_name() },
+                reason: $crate::attribute::AttributeReason::Display { name: $item.get_name() },
                 priority: 0,
-                modifier: crate::attribute::AttributeModifier::Set($value),
+                modifier: $crate::attribute::AttributeModifier::Set($value),
             }
         };
     }
@@ -65,11 +65,11 @@ pub mod macros {
             let name = $item.get_name();
             
             $item.get_stats_mut().push_attribute($at, 
-                crate::attribute::Attribute {
+                $crate::attribute::Attribute {
                     uuid: uuid::Uuid::new_v4(),
-                    reason: crate::attribute::AttributeReason::Display { name },
+                    reason: $crate::attribute::AttributeReason::Display { name },
                     priority: 0,
-                    modifier: crate::attribute::AttributeModifier::Set($value),
+                    modifier: $crate::attribute::AttributeModifier::Set($value),
                 }
             );
         };

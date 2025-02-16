@@ -105,7 +105,7 @@ mod tests {
         }
     
         fn push_attribute(&mut self, at: AttributeType, attribute: Attribute) {
-            self.attributes.entry(at).or_insert_with(Vec::new).push(attribute);
+            self.attributes.entry(at).or_default().push(attribute);
         }
     
         fn push_attributes(&mut self, attributes: HashMap<AttributeType, Attribute>) {
@@ -115,7 +115,7 @@ mod tests {
         }
     
         fn set_attribute(&mut self, at: AttributeType, id: uuid::Uuid, attribute: Attribute) {
-            let vec = self.attributes.entry(at).or_insert_with(Vec::new);
+            let vec = self.attributes.entry(at).or_default();
     
             if let Some(index) = vec.iter().position(|a| a.uuid == id) {
                 vec[index] = attribute;
