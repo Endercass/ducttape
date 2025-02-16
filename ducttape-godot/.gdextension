@@ -1,0 +1,14 @@
+[configuration]
+entry_symbol = "gdext_rust_init"
+compatibility_minimum = 4.1
+reloadable = true
+
+[libraries]
+linux.debug.x86_64 =     "res://../target/debug/libducttape_native.so"
+linux.release.x86_64 =   "res://../target/release/libducttape_native.so"
+windows.debug.x86_64 =   "res://../target/debug/ducttape_native.dll"
+windows.release.x86_64 = "res://../target/release/ducttape_native.dll"
+macos.debug =            "res://../target/debug/libducttape_native.dylib"
+macos.release =          "res://../target/release/libducttape_native.dylib"
+macos.debug.arm64 =      "res://../target/debug/libducttape_native.dylib"
+macos.release.arm64 =    "res://../target/release/libducttape_native.dylib"
