@@ -1,8 +1,9 @@
-[gd_scene load_steps=8 format=4 uid="uid://b3ldsp8epe0sf"]
+[gd_scene load_steps=9 format=4 uid="uid://b3ldsp8epe0sf"]
 
 [ext_resource type="PackedScene" uid="uid://cg5adqaluxuvv" path="res://Player.tscn" id="1_2q8gq"]
 [ext_resource type="Texture2D" uid="uid://bor3mr0osjrgu" path="res://thirdparty/PixelNookCave/Demo/Tiles.png" id="2_kvcxq"]
 [ext_resource type="Texture2D" uid="uid://b2lnc0beok470" path="res://thirdparty/PixelNookCave/Demo/Background.png" id="3_uawvp"]
+[ext_resource type="PackedScene" uid="uid://tddmq28dhb5g" path="res://hud.tscn" id="4_jh0vd"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_17lrm"]
 texture = ExtResource("3_uawvp")
@@ -74,3 +75,7 @@ jump_height = -150.0
 position = Vector2(87, 269)
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Hud" parent="CanvasLayer" instance=ExtResource("4_jh0vd")]

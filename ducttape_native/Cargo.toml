@@ -7,4 +7,10 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
+bevy_godot4 = { git = "https://github.com/jrockett6/bevy_godot4", branch = "main" }
+bevy = { version = "0.14.1", default-features = false, features = ["bevy_asset", "bevy_state"] }
+clap = { version = "4.5.29", features = ["derive"] }
+ducttape-item-engine = { version = "0.1.0", path = "../ducttape-item-engine" }
 godot = "0.2.3"
+uuid = { version = "1.12.1", features = ["v4"] }
+valence_text = "0.2.0-alpha.1"

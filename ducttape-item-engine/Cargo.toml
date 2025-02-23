@@ -8,7 +8,8 @@ default = ["prelude-items"]
 prelude-items = []
 
 [dependencies]
+godot = "0.2.3"
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.138"
-uuid = { version = "1.13.1", features = ["fast-rng", "v4"] }
+uuid = { version = "1.12.1", features = ["fast-rng", "v4"] }
 valence_text = "0.2.0-alpha.1"

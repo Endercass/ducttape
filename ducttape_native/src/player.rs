@@ -1,4 +1,6 @@
 
+use bevy::ecs::{component::Component, system::Commands};
+use bevy_godot4::prelude::GodotScene;
 use godot::{classes::{CharacterBody2D, ICharacterBody2D, InputEvent}, prelude::*};
 
 #[derive(GodotClass)]
@@ -55,3 +57,13 @@ impl ICharacterBody2D for Player {
 
     }
 }
+
+// impl Component for Player {
+//    const STORAGE_TYPE: bevy::ecs::component::StorageType = bevy::ecs::component::StorageType::Table;
+// }
+
+// pub fn spawn(commands: &mut Commands) -> Gd<Player> {
+//     let player = Player::new_alloc();
+//     commands.spawn(()).insert(player);
+//     player
+// }

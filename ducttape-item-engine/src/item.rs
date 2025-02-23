@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 
+use godot::{prelude::{GodotConvert, Var}};
 use valence_text::Text;
 
 use crate::attribute::{Attribute, AttributeType};
@@ -42,6 +43,66 @@ pub trait Stats {
 
     fn remove_attribute(&mut self, at: AttributeType, id: uuid::Uuid);
     fn remove_attributes(&mut self, at: AttributeType);
+}
+
+pub struct ItemCollection {
+    items: Vec<Box<dyn Item>>,
+}
+
+impl ItemCollection {
+    pub fn new() -> Self {
+        Self {
+            items: Vec::new(),
+        }
+    }
+
+    pub fn add_item(&mut self, item: Box<dyn Item>) {
+        self.items.push(item);
+    }
+
+    pub fn get_item(&self, index: usize) -> Option<&Box<dyn Item>> {
+        self.items.get(index)
+    }
+
+    pub fn get_item_mut(&mut self, index: usize) -> Option<&mut Box<dyn Item>> {
+        self.items.get_mut(index)
+    }
+
+    pub fn remove_item(&mut self, index: usize) -> Box<dyn Item> {
+        self.items.remove(index)
+    }
+
+    pub fn len(&self) -> usize {
+        self.items.len()
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<Box<dyn Item>> {
+        self.items.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<Box<dyn Item>> {
+        self.items.iter_mut()
+    }
+
+    pub fn into_iter(self) -> std::vec::IntoIter<Box<dyn Item>> {
+        self.items.into_iter()
+    }
+
+    pub fn clear(&mut self) {
+        self.items.clear();
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.items.is_empty()
+    }
+
+    pub fn get_items(&self) -> &Vec<Box<dyn Item>> {
+        &self.items
+    }
+
+    pub fn get_items_mut(&mut self) -> &mut Vec<Box<dyn Item>> {
+        &mut self.items
+    }
 }
 
 pub mod macros {
