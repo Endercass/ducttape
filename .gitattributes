@@ -1,0 +1,7 @@
+* text=auto
+*.tscn text
+*.png binary
+*.wasm binary
+*.so binary
+*.dll binary
+*.exe binary
