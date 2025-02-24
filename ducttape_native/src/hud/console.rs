@@ -1,19 +1,23 @@
-use std::rc::Rc;
-
-use ducttape_item_engine::{item::{Item, ItemCollection}, prelude_items::rock::Rock, text_renderer::{ansi_renderer::AnsiRenderer, bbcode_renderer::BBCodeRenderer}};
-use godot::{classes::{Control, IControl, Label, VBoxContainer}, obj::NewAlloc, prelude::*};
+use godot::{
+    classes::{Control, IControl, Label, VBoxContainer},
+    obj::NewAlloc,
+    prelude::*,
+};
 
 #[derive(GodotClass)]
 #[class(base = Control)]
 pub struct Console {
     base: Base<Control>,
-    box_container: Gd<VBoxContainer>
+    box_container: Gd<VBoxContainer>,
 }
 
 #[godot_api]
 impl IControl for Console {
     fn init(base: Base<Control>) -> Self {
-        Self { base, box_container: VBoxContainer::new_alloc() }
+        Self {
+            base,
+            box_container: VBoxContainer::new_alloc(),
+        }
     }
 
     fn ready(&mut self) {

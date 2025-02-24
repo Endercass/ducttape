@@ -1071,6 +1071,7 @@ dependencies = [
  "clap",
  "ducttape-item-engine",
  "godot 0.2.3",
+ "lazy_static",
  "uuid",
  "valence_text",
 ]

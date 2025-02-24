@@ -4,7 +4,6 @@ pub trait BBCodeRenderer {
     fn to_bbcode_string(&self) -> String;
 }
 
-
 impl BBCodeRenderer for Text {
     fn to_bbcode_string(&self) -> String {
         let mut bbcode_string = String::new();

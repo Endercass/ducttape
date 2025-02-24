@@ -71,7 +71,6 @@ tile_set = SubResource("TileSet_tx0wv")
 metadata/_edit_lock_ = true
 
 [node name="Player" parent="." instance=ExtResource("1_2q8gq")]
-jump_height = -150.0
 position = Vector2(87, 269)
 
 [node name="Camera2D" type="Camera2D" parent="Player"]

@@ -2,19 +2,17 @@ use std::collections::HashMap;
 
 use valence_text::{color::NamedColor, Color, IntoText, Text};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum AttributeReason {
     Hidden,
-    Display {
-        name: Text,
-    }
+    Display { name: Text },
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub enum AttributeType {
     /// How much damage the item can deal
     Sharpness,
-    /// How much damage the item can take 
+    /// How much damage the item can take
     Durability,
     /// How much the item weighs
     Weight,
@@ -26,7 +24,7 @@ pub enum AttributeType {
     Speed,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Attribute {
     pub uuid: uuid::Uuid,
     pub reason: AttributeReason,
@@ -34,7 +32,7 @@ pub struct Attribute {
     pub modifier: AttributeModifier,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum AttributeModifier {
     Multiply(f64),
     Add(f64),
@@ -44,43 +42,25 @@ pub enum AttributeModifier {
 impl AttributeModifier {
     pub fn is_buff(&self) -> bool {
         match self {
-            AttributeModifier::Multiply(m) => {
-                *m > 1.0
-            },
-            AttributeModifier::Add(a) => {
-                *a > 0.0
-            },
-            AttributeModifier::Set(_) => {
-                false
-            }
+            AttributeModifier::Multiply(m) => *m > 1.0,
+            AttributeModifier::Add(a) => *a > 0.0,
+            AttributeModifier::Set(_) => false,
         }
     }
 
     pub fn is_neutral(&self) -> bool {
         match self {
-            AttributeModifier::Multiply(m) => {
-                *m == 1.0
-            },
-            AttributeModifier::Add(a) => {
-                *a == 0.0
-            },
-            AttributeModifier::Set(_) => {
-                true
-            }
+            AttributeModifier::Multiply(m) => *m == 1.0,
+            AttributeModifier::Add(a) => *a == 0.0,
+            AttributeModifier::Set(_) => true,
         }
     }
 
     pub fn is_debuff(&self) -> bool {
         match self {
-            AttributeModifier::Multiply(m) => {
-                *m < 1.0
-            },
-            AttributeModifier::Add(a) => {
-                *a < 0.0
-            },
-            AttributeModifier::Set(_) => {
-                false
-            }
+            AttributeModifier::Multiply(m) => *m < 1.0,
+            AttributeModifier::Add(a) => *a < 0.0,
+            AttributeModifier::Set(_) => false,
         }
     }
 
@@ -102,14 +82,14 @@ impl std::fmt::Display for AttributeModifier {
         match self {
             AttributeModifier::Multiply(m) => {
                 write!(f, " x {}", m)
-            },
+            }
             AttributeModifier::Add(a) => {
                 if *a > 0.0 {
                     write!(f, " + {}", a)
                 } else {
                     write!(f, " - {}", a.abs())
                 }
-            },
+            }
             AttributeModifier::Set(s) => {
                 write!(f, " = {}", s)
             }
@@ -117,10 +97,12 @@ impl std::fmt::Display for AttributeModifier {
     }
 }
 
-
 impl<'a> IntoText<'a> for AttributeModifier {
     fn into_cow_text(self) -> std::borrow::Cow<'a, Text> {
-        format!("{}", self).into_text().color(Color::Named(self.stat_color())).into_cow_text()
+        format!("{}", self)
+            .into_text()
+            .color(Color::Named(self.stat_color()))
+            .into_cow_text()
     }
 }
 
@@ -133,14 +115,15 @@ impl<'a> IntoText<'a> for AttributeType {
             AttributeType::Strength => "💪",
             AttributeType::Agility => "🏃",
             AttributeType::Speed => "🏹",
-        }).into_cow_text()
+        })
+        .into_cow_text()
     }
 }
 
 impl<'a> IntoText<'a> for Attribute {
     fn into_cow_text(self) -> std::borrow::Cow<'a, Text> {
         let mut txt = self.modifier.into_text();
-        if let AttributeReason::Display { name, } = self.reason {
+        if let AttributeReason::Display { name } = self.reason {
             txt = txt + " (" + name + ")";
         }
 
@@ -148,21 +131,15 @@ impl<'a> IntoText<'a> for Attribute {
     }
 }
 
-
 /// Helper struct for aggregatijng attributes
 #[derive(Clone)]
 pub struct AttributeParser {
-    attributes: HashMap<
-        AttributeType,
-        Vec<Attribute>
-    >
+    attributes: HashMap<AttributeType, Vec<Attribute>>,
 }
 
 impl From<HashMap<AttributeType, Vec<Attribute>>> for AttributeParser {
     fn from(attributes: HashMap<AttributeType, Vec<Attribute>>) -> Self {
-        AttributeParser {
-            attributes
-        }
+        AttributeParser { attributes }
     }
 }
 
@@ -175,7 +152,7 @@ impl Default for AttributeParser {
 impl AttributeParser {
     pub fn new() -> Self {
         AttributeParser {
-            attributes: HashMap::new()
+            attributes: HashMap::new(),
         }
     }
 
@@ -190,7 +167,6 @@ impl AttributeParser {
             vec.sort_by(|a, b| a.priority.cmp(&b.priority));
         }
     }
-    
 
     pub fn aggregate_to_value(&self, at: AttributeType) -> f64 {
         let mut value = 0.0;
@@ -199,10 +175,10 @@ impl AttributeParser {
                 match attribute.modifier {
                     AttributeModifier::Multiply(m) => {
                         value *= m;
-                    },
+                    }
                     AttributeModifier::Add(a) => {
                         value += a;
-                    },
+                    }
                     AttributeModifier::Set(s) => {
                         value = s;
                     }
@@ -230,9 +206,10 @@ impl AttributeParser {
     }
 
     pub fn aggregate_to_fixed_attributes(&self) -> HashMap<AttributeType, Attribute> {
-        self.attributes.keys().map(|at| {
-            (*at, self.aggregate_to_fixed_attribute(*at))
-        }).collect()
+        self.attributes
+            .keys()
+            .map(|at| (*at, self.aggregate_to_fixed_attribute(*at)))
+            .collect()
     }
 
     pub fn aggregate_to_component(&self, at: AttributeType) -> Text {
@@ -246,9 +223,10 @@ impl AttributeParser {
     }
 
     pub fn aggregate_to_components(&self) -> HashMap<AttributeType, Text> {
-        self.attributes.keys().map(|at| {
-            (*at, self.aggregate_to_component(*at))
-        }).collect()
+        self.attributes
+            .keys()
+            .map(|at| (*at, self.aggregate_to_component(*at)))
+            .collect()
     }
 }
 
@@ -257,15 +235,9 @@ impl<'a> IntoText<'a> for AttributeParser {
         let mut txt = "".into_text();
 
         self.aggregate_to_components().iter().for_each(|(at, c)| {
-            txt = txt.clone()
-                + *at
-                + ": " 
-                + "\n"
-                + c.clone()
-                + "\n";
+            txt = txt.clone() + *at + ": " + "\n" + c.clone() + "\n";
         });
 
         txt.into_cow_text()
     }
 }
-
