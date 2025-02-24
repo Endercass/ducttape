@@ -1,12 +1,5 @@
-use std::{
-    any::{Any, TypeId},
-    collections::HashMap,
-    fmt::Debug,
-    pin::Pin,
-    sync::{Arc, Mutex, MutexGuard},
-};
+use std::{any::Any, collections::HashMap, fmt::Debug};
 
-use godot::{classes::ip::Type, meta::ToGodot, prelude::GodotConvert};
 use valence_text::Text;
 
 use crate::{
@@ -70,6 +63,10 @@ impl ItemCollectionSized {
         }
 
         Self { items, size }
+    }
+
+    pub fn get_size(&self) -> usize {
+        self.size
     }
 }
 

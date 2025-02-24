@@ -4,7 +4,7 @@ pub mod player;
 pub mod singletons;
 
 use bevy::{prelude::*, state::app::StatesPlugin};
-use godot::{classes::Engine, prelude::*};
+use godot::prelude::*;
 use uuid::Uuid;
 use valence_text::{color::NamedColor, IntoText, Text};
 

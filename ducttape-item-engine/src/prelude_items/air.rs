@@ -1,11 +1,6 @@
-use std::collections::HashMap;
-
 use valence_text::{IntoText, Text};
 
-use crate::{
-    attribute::{Attribute, AttributeType},
-    item::{Item, SpecialAbility, Stats},
-};
+use crate::item::{Item, SpecialAbility, Stats};
 
 use super::stats::BasicStats;
 

@@ -1,15 +1,8 @@
-use std::ops::Deref;
-
-use ducttape_item_engine::{
-    item::{ItemCollection, ItemCollectionSized},
-    prelude_items::rock::Rock,
-    text_renderer::bbcode_renderer::BBCodeRenderer,
-};
+use ducttape_item_engine::{item::ItemCollection, text_renderer::bbcode_renderer::BBCodeRenderer};
 use godot::{
     classes::{
-        canvas_item::TextureFilter, control::SizeFlags, Control, GridContainer, IPanel, InputEvent,
-        Label, Panel, ResourceLoader, RichTextLabel, Texture, Texture2D, TextureRect,
-        VBoxContainer,
+        control::SizeFlags, Control, GridContainer, IPanel, InputEvent, Label, Panel,
+        ResourceLoader, Texture2D, TextureRect,
     },
     obj::NewAlloc,
     prelude::*,
@@ -43,7 +36,7 @@ impl CenterAnchor for Control {
 
 impl Inventory {
     fn render(&mut self) {
-        if let None = self.grid {
+        if self.grid.is_none() {
             return;
         }
 

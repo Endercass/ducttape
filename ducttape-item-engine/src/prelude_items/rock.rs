@@ -1,10 +1,8 @@
-use std::collections::HashMap;
-
 use valence_text::Text;
 
 use crate::{
     add_base_attribute, add_base_attributes,
-    attribute::{Attribute, AttributeType},
+    attribute::AttributeType,
     item::{Item, SpecialAbility, Stats},
 };
 
@@ -44,26 +42,6 @@ impl Rock {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::{attribute::AttributeParser, text_renderer::ansi_renderer::AnsiRenderer};
-
-    use super::*;
-
-    #[test]
-    fn rock_attrs() {
-        let rock = Rock::new();
-
-        let stats = rock.get_stats();
-        let parser = AttributeParser::from(stats.get_all_attributes());
-
-        let debug_txt = rock.get_name() + "\n---\n" + parser.clone();
-
-        // Print out the item info for debugging
-        println!("{}", debug_txt.to_ansi_string());
-    }
-}
-
 impl Item for Rock {
     fn get_name(&self) -> Text {
         "🪨".into()
@@ -83,5 +61,25 @@ impl Item for Rock {
 
     fn get_color(&self) -> u32 {
         0x808080 // Gray color
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{attribute::AttributeParser, text_renderer::ansi_renderer::AnsiRenderer};
+
+    use super::*;
+
+    #[test]
+    fn rock_attrs() {
+        let rock = Rock::new();
+
+        let stats = rock.get_stats();
+        let parser = AttributeParser::from(stats.get_all_attributes());
+
+        let debug_txt = rock.get_name() + "\n---\n" + parser.clone();
+
+        // Print out the item info for debugging
+        println!("{}", debug_txt.to_ansi_string());
     }
 }

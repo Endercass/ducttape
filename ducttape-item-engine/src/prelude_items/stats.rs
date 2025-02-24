@@ -86,6 +86,12 @@ pub struct BasicStatsBuilder {
     attributes: HashMap<AttributeType, Vec<Attribute>>,
 }
 
+impl Default for BasicStatsBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BasicStatsBuilder {
     pub fn new() -> Self {
         BasicStatsBuilder {
