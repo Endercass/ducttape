@@ -1,3 +1,5 @@
+use bevy::ecs::system::Commands;
+use bevy_godot4::prelude::{ErasedGdResource, GodotScene};
 use godot::{
     classes::{CharacterBody2D, ICharacterBody2D, InputEvent},
     prelude::*,
@@ -5,7 +7,7 @@ use godot::{
 
 #[derive(GodotClass)]
 #[class(base=CharacterBody2D)]
-struct Player {
+pub struct Player {
     base: Base<CharacterBody2D>,
     #[export]
     speed: f32,
@@ -24,6 +26,12 @@ impl ICharacterBody2D for Player {
             gravity: 200.0,
             jump_height: -150.0,
         }
+    }
+
+    fn ready(&mut self) {
+        // Add a camera to the player
+        let cam = Camera2D::new_alloc();
+        self.base_mut().add_child(&cam);
     }
 
     fn physics_process(&mut self, delta: f64) {
@@ -60,12 +68,10 @@ impl ICharacterBody2D for Player {
     }
 }
 
-// impl Component for Player {
-//    const STORAGE_TYPE: bevy::ecs::component::StorageType = bevy::ecs::component::StorageType::Table;
-// }
+pub fn spawn(mut commands: Commands) {
+    let player_scene = load::<Resource>("res://Player.tscn");
 
-// pub fn spawn(commands: &mut Commands) -> Gd<Player> {
-//     let player = Player::new_alloc();
-//     commands.spawn(()).insert(player);
-//     player
-// }
+    commands.spawn(GodotScene::from_resource(ErasedGdResource::new(
+        player_scene.clone(),
+    )));
+}

@@ -96,7 +96,7 @@ pub type ItemCollectionResult<T> = Result<T, ItemCollectionError>;
 
 pub trait ItemCollection {
     fn add_item(&mut self, item: Box<dyn Item>) -> ItemCollectionResult<()>;
-    fn get_item(&self, index: usize) -> ItemCollectionResult<&Box<dyn Item>>;
+    fn get_item(&self, index: usize) -> ItemCollectionResult<&dyn Item>;
     fn get_item_mut(&mut self, index: usize) -> ItemCollectionResult<&mut Box<dyn Item>>;
     fn remove_item(&mut self, index: usize) -> ItemCollectionResult<Box<dyn Item>>;
     fn len(&self) -> usize;
@@ -115,13 +115,13 @@ impl ItemCollection for ItemCollectionUnsized {
         Ok(())
     }
 
-    fn get_item(&self, index: usize) -> ItemCollectionResult<&Box<dyn Item>> {
+    fn get_item(&self, index: usize) -> ItemCollectionResult<&dyn Item> {
         if let Some(item) = self.items.get(index) {
             if item.is_air() {
                 println!("Found air item: {:?}", item.get_name());
                 Err(ItemCollectionError::NotFound)
             } else {
-                Ok(item)
+                Ok(&**item)
             }
         } else {
             Err(ItemCollectionError::NotFound)
@@ -199,13 +199,13 @@ impl ItemCollection for ItemCollectionSized {
         )
     }
 
-    fn get_item(&self, index: usize) -> ItemCollectionResult<&Box<dyn Item>> {
+    fn get_item(&self, index: usize) -> ItemCollectionResult<&dyn Item> {
         if let Some(item) = self.items.get(index) {
             if item.is_air() {
                 println!("Found air item: {:?}", item.get_name());
                 Err(ItemCollectionError::NotFound)
             } else {
-                Ok(item)
+                Ok(&**item)
             }
         } else {
             Err(ItemCollectionError::NotFound)
