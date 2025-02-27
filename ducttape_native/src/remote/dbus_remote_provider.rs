@@ -34,7 +34,7 @@ pub struct DbusRemoteProvider {
 impl From<DbusCommandQueue> for DbusRemoteProvider {
     fn from(command_queue: DbusCommandQueue) -> Self {
         Self {
-            command_queue: command_queue,
+            command_queue,
         }
     }
 }
