@@ -1,5 +1,3 @@
-use bevy::ecs::system::Commands;
-use bevy_godot4::prelude::{ErasedGdResource, GodotScene};
 use godot::{
     classes::{CharacterBody2D, ICharacterBody2D, InputEvent},
     prelude::*,
@@ -66,12 +64,4 @@ impl ICharacterBody2D for Player {
             base.set_velocity(Vector2::new(velocity.x, jump_height));
         }
     }
-}
-
-pub fn spawn(mut commands: Commands) {
-    let player_scene = load::<Resource>("res://Player.tscn");
-
-    commands.spawn(GodotScene::from_resource(ErasedGdResource::new(
-        player_scene.clone(),
-    )));
 }
