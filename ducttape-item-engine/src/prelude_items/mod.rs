@@ -4,51 +4,63 @@ pub mod stats;
 
 #[cfg(test)]
 mod tests {
-    use valence_text::{IntoText, Text};
+    use valence_text::IntoText;
 
     use crate::{
         attribute::{
             Attribute, AttributeModifier, AttributeParser, AttributeReason, AttributeType,
         },
-        item::{Item, SpecialAbility, Stats},
+        item::{DummyHook, EngineHook, Item, ItemMut, SpecialAbility, Stats},
         text_renderer::ansi_renderer::AnsiRenderer,
     };
     use std::collections::HashMap;
 
-    #[derive(Debug)]
-    pub struct Ball {
+    #[derive(Debug, Clone)]
+    pub struct Ball<THook: EngineHook = DummyHook> {
         stats: BallStats,
         color: u32,
+        phantom: std::marker::PhantomData<THook>,
     }
 
-    impl Ball {
+    impl<THook: EngineHook> Ball<THook> {
         pub fn new(color: u32) -> Self {
             Ball {
                 stats: BallStats::default(),
                 color,
+                phantom: std::marker::PhantomData,
             }
         }
     }
 
-    impl Item for Ball {
-        fn get_name(&self) -> Text {
+    impl<THook: EngineHook> Item<THook> for Ball<THook> {
+        fn get_name(&self) -> String {
             "⚽".into()
+        }
+
+        fn get_ident(&self) -> String {
+            "ball".into()
         }
 
         fn get_stats(&self) -> Box<dyn Stats> {
             Box::new(self.stats.clone())
         }
 
-        fn get_stats_mut(&mut self) -> &mut dyn Stats {
-            &mut self.stats
-        }
-
-        fn get_special_abilities(&self) -> Vec<Box<dyn SpecialAbility<()>>> {
+        fn get_special_abilities(&self) -> Vec<&Box<dyn SpecialAbility<THook>>> {
             Vec::new()
         }
 
-        fn get_color(&self) -> u32 {
-            self.color
+        fn special_abilities(&self) -> Vec<Box<dyn SpecialAbility<THook>>> {
+            Vec::new()
+        }
+
+        fn get_texture(&self) -> Option<image::DynamicImage> {
+            None
+        }
+    }
+
+    impl<THook: EngineHook> ItemMut for Ball<THook> {
+        fn get_stats_mut(&mut self) -> &mut dyn Stats {
+            &mut self.stats
         }
     }
 
@@ -65,41 +77,31 @@ mod tests {
                 vec![
                     Attribute {
                         uuid: uuid::Uuid::new_v4(),
-                        reason: AttributeReason::Display {
-                            name: "⚽".into_text(),
-                        },
+                        reason: AttributeReason::Display("⚽".to_string()),
                         priority: 0,
                         modifier: AttributeModifier::Set(100.0),
                     },
                     Attribute {
                         uuid: uuid::Uuid::new_v4(),
-                        reason: AttributeReason::Display {
-                            name: "✖️".into_text(),
-                        },
+                        reason: AttributeReason::Display("✖️".to_string()),
                         priority: 4,
                         modifier: AttributeModifier::Multiply(1.5),
                     },
                     Attribute {
                         uuid: uuid::Uuid::new_v4(),
-                        reason: AttributeReason::Display {
-                            name: "➕".into_text(),
-                        },
+                        reason: AttributeReason::Display("➕".to_string()),
                         priority: 2,
                         modifier: AttributeModifier::Add(10.0),
                     },
                     Attribute {
                         uuid: uuid::Uuid::new_v4(),
-                        reason: AttributeReason::Display {
-                            name: "➗".into_text(),
-                        },
+                        reason: AttributeReason::Display("➗".to_string()),
                         priority: 6,
                         modifier: AttributeModifier::Multiply(0.75),
                     },
                     Attribute {
                         uuid: uuid::Uuid::new_v4(),
-                        reason: AttributeReason::Display {
-                            name: "➖".into_text(),
-                        },
+                        reason: AttributeReason::Display("➖".to_string()),
                         priority: 8,
                         modifier: AttributeModifier::Add(-10.0),
                     },
@@ -164,11 +166,11 @@ mod tests {
 
     #[test]
     fn ball_item() {
-        let ball = Ball::new(0xFFFFFF);
+        let ball: Ball = Ball::new(0xFFFFFF);
         let stats = ball.get_stats();
         let parser = AttributeParser::from(stats.get_all_attributes());
 
-        let debug_txt = ball.get_name() + "\n---\n" + parser.clone();
+        let debug_txt = ball.get_name().into_text() + "\n---\n" + parser.clone();
 
         println!("{}", debug_txt.to_ansi_string());
 

@@ -1,20 +1,70 @@
 use ducttape_item_engine::{
-    item::{ItemCollection as _, ItemCollectionSized},
-    prelude_items::rock::Rock,
+    item::{DummyHook, ItemCollection as _, ItemCollectionSized, ItemRegistry, ItemStack},
+    prelude_items::{air::Air, rock::Rock},
 };
+use godot::global::godot_print;
 use lazy_static::lazy_static;
-use std::sync::Mutex;
+use maplit::hashmap;
+use std::sync::{Arc, Mutex};
+
+use crate::template::loader::ItemTemplate;
 
 // static INVENTORY: Mutex<Option<ItemCollectionSized>> = Mutex::new(None);
 
 lazy_static! {
     pub static ref INVENTORY: Mutex<ItemCollectionSized> = Mutex::new(generate_sample_inventory());
+    pub static ref ITEM_REGISTRY: Mutex<ItemRegistry<DummyHook>> =
+        Mutex::new(create_item_registry());
 }
 
 fn generate_sample_inventory() -> ItemCollectionSized {
+    let mut registry = ITEM_REGISTRY.lock().unwrap();
+
     let mut inventory = ItemCollectionSized::new(16);
     inventory
-        .add_item(Box::new(Rock::new()))
+        .add_item(ItemStack::new(registry.get("rock").unwrap().clone(), 3))
         .expect("Failed to add item to inventory");
+
     inventory
+        .add_item(ItemStack::new(registry.get("rock").unwrap().clone(), 1))
+        .expect("Failed to add item to inventory");
+
+    inventory
+        .add_item(ItemStack::new(registry.get("rock").unwrap().clone(), 2))
+        .expect("Failed to add item to inventory");
+
+    let spear_template = ItemTemplate::load_template("template.toml").unwrap();
+
+    let components = hashmap! {
+        "shaft".to_owned() => registry.get("rock").unwrap().clone(),
+        "tip".to_owned() => registry.get("rock").unwrap().clone(),
+    };
+
+    let spear = spear_template.populate_template(components);
+
+    registry.register("spear".to_owned(), Arc::new(spear));
+
+    inventory
+        .add_item(ItemStack::new(registry.get("spear").unwrap().clone(), 1))
+        .expect("Failed to add item to inventory");
+
+    inventory
+}
+
+pub fn create_item_registry() -> ItemRegistry<DummyHook> {
+    let mut registry: ItemRegistry = ItemRegistry::new();
+
+    registry.register("rock".to_owned(), {
+        let rock = Rock::new();
+        godot_print!("Registered rock item: {:?}", rock);
+        Arc::new(rock)
+    });
+
+    registry.register("air".to_owned(), {
+        let air = Air::new();
+        godot_print!("Registered air item: {:?}", air);
+        Arc::new(air)
+    });
+
+    registry
 }

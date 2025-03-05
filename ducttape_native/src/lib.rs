@@ -3,6 +3,7 @@ pub mod hud;
 pub mod player;
 pub mod remote;
 pub mod singletons;
+pub mod template;
 
 use std::future::pending;
 
@@ -46,46 +47,6 @@ fn build_app(app: &mut App) {
         .add_systems(Update, transform_system.as_physics_system());
 
     godot_print!("Starting Remote provider (main)");
-
-    // smol::spawn(async move {
-    //     godot_print!("Starting Remote provider (smol)");
-
-    //     let provider: DbusRemoteProvider = queue.clone().into(); // Clone the Arc to move it into the thread
-
-    //     godot_print!("Provider created");
-
-    //     let conn = zbus::connection::Builder::session()
-    //         .unwrap()
-    //         .name("me.endercass.ducttape.Remote")
-    //         .unwrap()
-    //         .serve_at("/me/endercass/ducttape/Remote", provider)
-    //         .unwrap()
-    //         .build()
-    //         .await;
-
-    //     godot_print!("Remote provider started: {:?}", conn);
-    // })
-    // .detach();
-
-    godot_print!("Starting Remote provider (smol)");
-
-    // let provider: DbusRemoteProvider = queue.clone().into(); // Clone the Arc to move it into the thread
-
-    // let conn = zbus::blocking::connection::Builder::session()
-    //     .unwrap()
-    //     .name("me.endercass.ducttape.Remote")
-    //     .unwrap()
-    //     .serve_at("/me/endercass/ducttape/Remote", provider)
-    //     .unwrap()
-    //     .build()
-    //     .unwrap();
-    // godot_print!("Remote provider started: {:?}", conn);
-
-    // Box::leak(Box::new(conn));
-
-    // let task = smol::spawn();
-
-    // fork
 
     std::thread::spawn(move || {
         futures_lite::future::block_on(async move {

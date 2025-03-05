@@ -2,13 +2,14 @@ use std::collections::HashMap;
 
 use valence_text::{color::NamedColor, Color, IntoText, Text};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Deserialize)]
+#[serde(untagged)]
 pub enum AttributeReason {
     Hidden,
-    Display { name: Text },
+    Display(String),
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, serde::Deserialize)]
 pub enum AttributeType {
     /// How much damage the item can deal
     Sharpness,
@@ -18,10 +19,10 @@ pub enum AttributeType {
     Weight,
     /// How much weight you can be supported
     Strength,
-    /// How fast you can move
-    Agility,
     /// How fast you can attack
-    Speed,
+    Agility,
+    /// How far you can reach
+    Reach,
 }
 
 #[derive(Debug, Clone)]
@@ -32,7 +33,7 @@ pub struct Attribute {
     pub modifier: AttributeModifier,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Deserialize)]
 pub enum AttributeModifier {
     Multiply(f64),
     Add(f64),
@@ -114,7 +115,7 @@ impl<'a> IntoText<'a> for AttributeType {
             AttributeType::Weight => "🏋️",
             AttributeType::Strength => "💪",
             AttributeType::Agility => "🏃",
-            AttributeType::Speed => "🏹",
+            AttributeType::Reach => "🏹",
         })
         .into_cow_text()
     }
@@ -123,7 +124,7 @@ impl<'a> IntoText<'a> for AttributeType {
 impl<'a> IntoText<'a> for Attribute {
     fn into_cow_text(self) -> std::borrow::Cow<'a, Text> {
         let mut txt = self.modifier.into_text();
-        if let AttributeReason::Display { name } = self.reason {
+        if let AttributeReason::Display(name) = self.reason {
             txt = txt + " (" + name + ")";
         }
 

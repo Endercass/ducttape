@@ -1,10 +1,14 @@
 use std::sync::{Arc, Mutex};
 
 use bevy::ecs::prelude::*;
+use ducttape_item_engine::item::{ItemCollection as _, ItemStack};
 use godot::prelude::*;
 use zbus::interface;
 
-use crate::game_entities::GameEntity;
+use crate::{
+    game_entities::GameEntity,
+    singletons::inventory::{INVENTORY, ITEM_REGISTRY},
+};
 
 pub fn remote_provider_system(mut commands: Commands, queue: Res<DbusCommandQueue>) {
     let mut queue = queue.0.lock().unwrap();
@@ -33,9 +37,7 @@ pub struct DbusRemoteProvider {
 
 impl From<DbusCommandQueue> for DbusRemoteProvider {
     fn from(command_queue: DbusCommandQueue) -> Self {
-        Self {
-            command_queue,
-        }
+        Self { command_queue }
     }
 }
 
@@ -47,6 +49,23 @@ impl DbusRemoteProvider {
             entity,
             Vector2::new(position.0, position.1),
         ));
+    }
+
+    fn add_item(&self, item: String, amount: u32) {
+        println!("Adding item: {}", item);
+
+        let registry = ITEM_REGISTRY.lock().unwrap();
+        let mut inventory = INVENTORY.lock().unwrap();
+
+        if let Some(item) = registry.get(&item) {
+            println!("Found item: {:?}", item);
+
+            inventory
+                .add_item(ItemStack::new(item.clone(), amount))
+                .unwrap();
+        } else {
+            println!("Item not found: {}", item);
+        }
     }
 
     // fn remove_entity(&self, entity: Entity) -> Result<(), String>;

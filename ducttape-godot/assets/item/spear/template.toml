@@ -1,0 +1,95 @@
+# The folder where the asset is located
+# this is relative to the template.toml file, so it is usually "."
+# from this folder we will load template.png, and then will load each
+# `${component}:${item}.png` file
+# where: component is the key in the components table, and item is the identifier of the item 
+asset_folder = "."
+# The data name of the item, for usage in the internal item registry
+# this is distinct from the item identifier, because compound items like this one
+# will have multiple instances depending on the components, but they will all share the same data_name
+data_name = "spear"
+
+[attribute.Sharpness]
+strategy = "Sum"
+
+# 5 is a reasonable sharpness for a spear, as its not the sharpest weapon due to the tip shape
+# but it is still mainly used for piercing, so it should be sharp enough
+[attribute.Sharpness.attr.'9aedbcff-7ea9-4228-b7c8-df371092d901']
+# Priority of the attribute, acts as the order of attributes in the item tooltip
+# and as the order of attributes in the calculation of the item's stats
+# base attributes of the item, as seen here, will come before the component
+# item attributes
+priority = 1
+
+# Optionally add a reason (emoji item name) for the attribute. If this is not present,
+# the attribute will be interpreted as a
+# `Hidden` enum variant where the stat is not displayed in the item tooltip
+reason = "🍢"
+
+modifier = { "Set" = 5 }
+
+[attribute.Durability]
+strategy = "Sum"
+
+# Spears are fairly durable but not exceptionally so, so we will set the durability of the spear to 100
+[attribute.Durability.attr.'bd04a445-be04-416d-a775-ebd61db4587c']
+priority = 1
+reason = "🍢"
+modifier = { "Set" = 100 }
+
+[attribute.Weight]
+strategy = "Sum"
+
+# Spears are generally lightweight, so we will set the weight of the spear to 5
+[attribute.Weight.attr.'59ebf731-12be-4e93-92a3-f29e38d2a5f7']
+priority = 1
+reason = "🍢"
+modifier = { "Set" = 5 }
+
+[attribute.Strength]
+strategy = "Average"
+
+# The strength attribute is what controls how much weight the item can carry,
+# which in the context of a spear is how much force it can withstand before breaking.
+# When the spear is used for mobility, i.e. bridging across gaps, the strength attribute will 
+# judge how much durability the spear will lose when used in this way.
+# We will subtract the weight of the player from the strength of the spear and then
+# subtract the result from the durability of the spear to get the new durability of the spear
+# after the player has used it for bridging.
+[attribute.Strength.attr.'ef312d65-31bb-46b3-8fde-5098ac305146']
+priority = 1
+reason = "🍢"
+modifier = { "Set" = 50 }
+
+[attribute.Agility]
+strategy = "Average"
+
+# Since spears are used for mobility, agility is an important attribute for them
+# We will set the agility of the spear to 10
+[attribute.Agility.attr.'e36abc22-bc45-4763-abad-2c712d8e3878']
+priority = 1
+reason = "🍢"
+modifier = { "Set" = 10 }
+
+[attribute.Reach]
+strategy = "Sum"
+
+# The reach of the spear is an important attribute, as it determines how far the player can reach
+# The spear is a weapon that can either be used for melee or ranged combat, so it should have a decent reach
+[attribute.Reach.attr.'17f33751-2499-4928-9fcf-1d0143f443c2']
+priority = 1
+reason = "🍢"
+modifier = { "Set" = 10 }
+
+[components]
+# Each component here will specify a color from the template.png mask file that will correspond to the component of the item
+# The key is the name of the component, and the value is the color in the mask file
+tip = "#ff0000"
+shaft = "#00ff00"
+
+[fallback]
+# The stick texture is a reasonable fallback for the shaft component
+tip = "stick" # tip:stick.png
+# Any fallback for the tip component isn't ideal, as it is the most important part of the item visually and functionally
+# but stone will do i guess
+shaft = "stone" # shaft:stone.png

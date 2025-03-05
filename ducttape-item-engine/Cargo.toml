@@ -8,8 +8,15 @@ default = ["prelude-items"]
 prelude-items = []
 
 [dependencies]
-godot = "0.2.3"
+godot = { version = "0.2.3", features = ["experimental-threads"] }
+paste = "1.0.15"
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.138"
+bevy = { version = "0.15.3", default-features = false, features = [
+    "bevy_asset",
+    "bevy_state",
+] }
 uuid = { version = "1.12.1", features = ["fast-rng", "v4"] }
 valence_text = "0.2.0-alpha.1"
+image = { version = "0.25.5", default-features = false, features = ["rayon", "png"] }
+dyn-clone = "1.0.18"
