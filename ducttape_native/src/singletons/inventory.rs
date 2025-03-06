@@ -33,7 +33,7 @@ fn generate_sample_inventory() -> ItemCollectionSized {
         .add_item(ItemStack::new(registry.get("rock").unwrap().clone(), 2))
         .expect("Failed to add item to inventory");
 
-    let spear_template = ItemTemplate::load_template("template.toml").unwrap();
+    let spear_template = ItemTemplate::load_template("spear").unwrap();
 
     let components = hashmap! {
         "shaft".to_owned() => registry.get("rock").unwrap().clone(),

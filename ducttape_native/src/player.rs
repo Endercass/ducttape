@@ -1,5 +1,5 @@
 use godot::{
-    classes::{CharacterBody2D, ICharacterBody2D, InputEvent},
+    classes::{CharacterBody2D, ICharacterBody2D},
     global::clampf,
     prelude::*,
 };
@@ -29,9 +29,6 @@ pub struct Player {
     #[export]
     wall_slide_speed: f32,
     #[export]
-    // How long the player has to jump after walking off a ledge
-    air_jump_timer: f64,
-    #[export]
     jump_buffer_timer: f64,
     #[export]
     wall_jump_timer: f32,
@@ -39,13 +36,13 @@ pub struct Player {
     state: PlayerState,
 }
 
+#[derive(Debug)]
 pub struct PlayerState {
     pub sprinting: bool,
     pub can_jump: bool,
     pub should_jump: bool,
     pub wall_jump: bool,
     pub jumping: bool,
-    pub air_jump_timer: f64,
 }
 
 impl Default for PlayerState {
@@ -56,7 +53,6 @@ impl Default for PlayerState {
             should_jump: false,
             wall_jump: false,
             jumping: false,
-            air_jump_timer: 0.0,
         }
     }
 }
@@ -92,7 +88,6 @@ impl Player {
 
     fn buffer_jump(&mut self) {
         self.state.should_jump = true;
-        // self.state.air_jump_timer = self.air_jump_timer;
     }
 
     fn cancel_jump(&mut self, delta: f64) {
@@ -107,12 +102,18 @@ impl Player {
 
         let inputs = Input::singleton();
 
-        if self.state.air_jump_timer <= 0.0 && self.state.should_jump {
+        if self.state.should_jump {
             self.state.should_jump = false;
         }
 
         let jump_strength = inputs.get_action_strength("move_jump");
         let jump_pressed = inputs.is_action_just_pressed("move_jump");
+
+        if self.base().is_on_floor() {
+            self.state.can_jump = true;
+            self.state.wall_jump = false;
+            self.state.jumping = false;
+        }
 
         if (jump_pressed || self.state.should_jump) && self.state.can_jump {
             // self.get_input_direction();
@@ -124,12 +125,6 @@ impl Player {
         } else if !self.base().is_on_floor() && self.base().is_on_wall_only() {
             self.state.can_jump = true;
             self.state.wall_jump = true;
-            self.state.jumping = false;
-        }
-
-        if (self.base().is_on_floor() || velocity.y >= 0.0) {
-            self.state.can_jump = true;
-            self.state.wall_jump = false;
             self.state.jumping = false;
         }
     }
@@ -145,7 +140,7 @@ impl Player {
     fn handle_velocity(&mut self, delta: f64) {
         let direction = self.get_input_direction();
 
-        if (direction.x != 0.0) {
+        if direction.x != 0.0 {
             self.apply_velocity(delta, direction);
         } else {
             self.apply_friction(delta);
@@ -225,7 +220,6 @@ impl ICharacterBody2D for Player {
             jump_force: 200.0,
             jump_cancel_force: 800.0,
             wall_slide_speed: 50.0,
-            air_jump_timer: 0.08,
             jump_buffer_timer: 0.1,
             wall_jump_timer: 0.1,
             jump_height: 100.0,
@@ -240,8 +234,6 @@ impl ICharacterBody2D for Player {
     }
 
     fn physics_process(&mut self, delta: f64) {
-        // self.state.air_jump_timer -= delta;
-
         self.handle_jump(delta);
         self.handle_sprint();
         self.handle_velocity(delta);
