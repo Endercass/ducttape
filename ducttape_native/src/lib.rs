@@ -1,5 +1,6 @@
 pub mod game_entities;
 pub mod hud;
+pub mod item;
 pub mod player;
 pub mod remote;
 pub mod singletons;

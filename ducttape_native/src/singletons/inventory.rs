@@ -7,7 +7,7 @@ use lazy_static::lazy_static;
 use maplit::hashmap;
 use std::sync::{Arc, Mutex};
 
-use crate::template::loader::ItemTemplate;
+use crate::{item::rope::Rope, template::loader::ItemTemplate};
 
 // static INVENTORY: Mutex<Option<ItemCollectionSized>> = Mutex::new(None);
 
@@ -31,6 +31,10 @@ fn generate_sample_inventory() -> ItemCollectionSized {
 
     inventory
         .add_item(ItemStack::new(registry.get("rock").unwrap().clone(), 2))
+        .expect("Failed to add item to inventory");
+
+    inventory
+        .add_item(ItemStack::new(registry.get("rope").unwrap().clone(), 1))
         .expect("Failed to add item to inventory");
 
     let spear_template = ItemTemplate::load_template("spear").unwrap();
@@ -64,6 +68,12 @@ pub fn create_item_registry() -> ItemRegistry<DummyHook> {
         let air = Air::new();
         godot_print!("Registered air item: {:?}", air);
         Arc::new(air)
+    });
+
+    registry.register("rope".to_owned(), {
+        let rope = Rope::new();
+        godot_print!("Registered rope item: {:?}", rope);
+        Arc::new(rope)
     });
 
     registry
