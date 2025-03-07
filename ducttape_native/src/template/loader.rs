@@ -87,7 +87,7 @@ impl MaskedImage {
 
         let mask_image = image::open(format!("{}/template.png", base_path))?;
 
-        let image_path = format!("{}/{}:{}.png", base_path, component, item);
+        let image_path = format!("{}/{}-{}.png", base_path, component, item);
         let fallback_path: String = settings
             .globalize_path(template.fallback.get(component).ok_or("Missing Fallback")?)
             .into();
@@ -262,7 +262,7 @@ impl<THook: EngineHook> Item<THook> for TemplateItem<THook> {
     }
 }
 
-const ASSET_FOLDER: &str = "res://assets/item/"; // {template_name}/{component_name}:{item_name}.png
+const ASSET_FOLDER: &str = "res://assets/item/generated/"; // {template_name}/{component_name}-{item_name}.png
 
 #[derive(Debug, Clone)]
 pub struct ItemTemplate {
@@ -317,7 +317,7 @@ impl ItemTemplate {
             fallback: template
                 .fallback
                 .into_iter()
-                .map(|(k, v)| (k.clone(), format!("{}/{}:{}.png", folder, k, v)))
+                .map(|(k, v)| (k.clone(), format!("{}/{}-{}.png", folder, k, v)))
                 .collect(),
             folder,
             data_name: template.data_name,
