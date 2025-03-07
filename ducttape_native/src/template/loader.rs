@@ -98,10 +98,7 @@ impl MaskedImage {
 
         let mask_data = mask_image.pixels().map(|(x, y, pixel)| {
             let color = HexColor::rgba(pixel[0], pixel[1], pixel[2], pixel[3]);
-            let is_masked = template
-                .components
-                .get(component)
-                .map_or(false, |c| c == &color);
+            let is_masked = template.components.get(component) == Some(&color);
             ((y as usize, x as usize), is_masked)
         });
 
@@ -235,13 +232,9 @@ impl<THook: EngineHook> Item<THook> for TemplateItem<THook> {
 
     fn get_stats(&self) -> Box<dyn Stats> {
         // Intentionally leaving this mut so a warning signifies i need to implement this
-        let mut stats = BasicStatsBuilder::new();
+        let stats = BasicStatsBuilder::new();
         // Implement this later
         Box::new(stats.build())
-    }
-
-    fn get_special_abilities(&self) -> Vec<&Box<dyn SpecialAbility<THook>>> {
-        self.special_abilities.iter().collect()
     }
 
     fn special_abilities(&self) -> Vec<Box<dyn SpecialAbility<THook>>> {

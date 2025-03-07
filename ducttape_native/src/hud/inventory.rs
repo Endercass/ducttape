@@ -1,12 +1,9 @@
 use std::sync::mpsc;
 
-use ducttape_item_engine::{
-    item::{Item as _, ItemCollection, ItemCollectionEvent},
-    text_renderer::bbcode_renderer::BBCodeRenderer,
-};
+use ducttape_item_engine::item::{Item as _, ItemCollection, ItemCollectionEvent};
 use godot::{
     classes::{
-        control::SizeFlags, Control, GridContainer, IPanel, Image, ImageTexture, InputEvent, Label,
+        control::SizeFlags, Control, GridContainer, IPanel, InputEvent, Label,
         Panel, ResourceLoader, Texture2D, TextureRect,
     },
     obj::NewAlloc,
@@ -65,7 +62,7 @@ impl Inventory {
             slot_bg.set_custom_minimum_size(Vector2::new(48.0, 48.0));
             slot_bg.set_texture(&slot_texture);
 
-            match item.get_texture().and_then(|img| image_to_texture(img)) {
+            match item.get_texture().and_then(image_to_texture) {
                 Some(texture) => {
                     println!("Item texture: {:?}", texture);
                     let mut icon = TextureRect::new_alloc();

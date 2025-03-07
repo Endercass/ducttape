@@ -9,6 +9,12 @@ pub struct Air<THook: EngineHook = DummyHook> {
     phantom: std::marker::PhantomData<THook>,
 }
 
+impl<THook: EngineHook> Default for Air<THook> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<THook: EngineHook> Air<THook> {
     pub fn new() -> Self {
         Self {
@@ -33,10 +39,6 @@ impl<THook: EngineHook> Item<THook> for Air<THook> {
 
     fn get_stats(&self) -> Box<dyn Stats> {
         Box::new(self.stats.clone())
-    }
-
-    fn get_special_abilities(&self) -> Vec<&Box<dyn SpecialAbility<THook>>> {
-        vec![]
     }
 
     fn special_abilities(&self) -> Vec<Box<dyn SpecialAbility<THook>>> {

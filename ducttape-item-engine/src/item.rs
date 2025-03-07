@@ -17,8 +17,6 @@ pub trait Item<THook: EngineHook = DummyHook>: Any + Debug + Send + Sync + DynCl
     /// Get the item's stats. (This will be the final stats after component attributes, if present, and from the item's base stats)
     fn get_stats(&self) -> Box<dyn Stats>;
     /// Get the item's special abilities. (This will be the final special abilities after component attributes, if present, and from the item's base special abilities)
-    fn get_special_abilities(&self) -> Vec<&Box<dyn SpecialAbility<THook>>>;
-    /// Take the item's special abilities
     fn special_abilities(&self) -> Vec<Box<dyn SpecialAbility<THook>>>;
     /// Get the item's texture
     fn get_texture(&self) -> Option<DynamicImage>;
@@ -364,6 +362,12 @@ pub struct ItemRegistry<THook: EngineHook = DummyHook> {
     items: HashMap<String, Arc<dyn Item<THook>>>,
 }
 
+impl<THook: EngineHook> Default for ItemRegistry<THook> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<THook: EngineHook> ItemRegistry<THook> {
     pub fn new() -> Self {
         Self {
@@ -422,8 +426,13 @@ impl<THook: EngineHook> ItemRegistry<THook> {
     pub fn values_mut(&mut self) -> impl Iterator<Item = &mut Arc<dyn Item<THook>>> {
         self.items.values_mut()
     }
+}
 
-    pub fn into_iter(self) -> impl Iterator<Item = (String, Arc<dyn Item<THook>>)> {
+impl IntoIterator for ItemRegistry {
+    type Item = (String, Arc<dyn Item>);
+    type IntoIter = std::collections::hash_map::IntoIter<String, Arc<dyn Item>>;
+
+    fn into_iter(self) -> Self::IntoIter {
         self.items.into_iter()
     }
 }
@@ -471,10 +480,6 @@ impl<THook: EngineHook> Item<THook> for ItemStack<THook> {
 
     fn get_stats(&self) -> Box<dyn Stats> {
         self.item.get_stats()
-    }
-
-    fn get_special_abilities(&self) -> Vec<&Box<dyn SpecialAbility<THook>>> {
-        self.item.get_special_abilities()
     }
 
     fn special_abilities(&self) -> Vec<Box<dyn SpecialAbility<THook>>> {

@@ -130,11 +130,7 @@ impl Player {
     }
 
     fn handle_sprint(&mut self) {
-        if Input::singleton().get_action_strength("move_sprint") > 0.0 {
-            self.state.sprinting = true;
-        } else {
-            self.state.sprinting = false;
-        }
+        self.state.sprinting = Input::singleton().get_action_strength("move_sprint") > 0.0;
     }
 
     fn handle_velocity(&mut self, delta: f64) {

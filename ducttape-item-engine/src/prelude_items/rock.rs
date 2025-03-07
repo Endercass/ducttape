@@ -59,10 +59,6 @@ impl<THook: EngineHook> Item<THook> for Rock<THook> {
         Box::new(self.stats.clone())
     }
 
-    fn get_special_abilities(&self) -> Vec<&Box<dyn SpecialAbility<THook>>> {
-        Vec::new()
-    }
-
     fn special_abilities(&self) -> Vec<Box<dyn SpecialAbility<THook>>> {
         Vec::new()
     }
