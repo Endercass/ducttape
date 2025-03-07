@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c5ov3ruvhkx5x"
-path="res://.godot/imported/shaft:rock.png-2bc27445024654ec0e3baa0ef1dca470.ctex"
+path="res://.godot/imported/shaft-rock.png-ec38414ce8e669476f0499202794d3cc.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/item/spear/shaft:rock.png"
-dest_files=["res://.godot/imported/shaft:rock.png-2bc27445024654ec0e3baa0ef1dca470.ctex"]
+source_file="res://assets/item/generated/spear/shaft-rock.png"
+dest_files=["res://.godot/imported/shaft-rock.png-ec38414ce8e669476f0499202794d3cc.ctex"]
 
 [params]
 

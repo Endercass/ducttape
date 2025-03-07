@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://chrlsl5fu8vgb"
-path="res://.godot/imported/shaft:stick.png-61c02b12114d53ec7d8349450a8c55a5.ctex"
+path="res://.godot/imported/shaft-stick.png-33ec9d912a345cfbdca7b270826ab94a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/item/spear/shaft:stick.png"
-dest_files=["res://.godot/imported/shaft:stick.png-61c02b12114d53ec7d8349450a8c55a5.ctex"]
+source_file="res://assets/item/generated/spear/shaft-stick.png"
+dest_files=["res://.godot/imported/shaft-stick.png-33ec9d912a345cfbdca7b270826ab94a.ctex"]
 
 [params]
 

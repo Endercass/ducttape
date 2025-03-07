@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d0fl8d8krgp3i"
-path="res://.godot/imported/tip:rock.png-98bcb551717017309de95ca04a07f52c.ctex"
+path="res://.godot/imported/tip-rock.png-1829880c47cc6e6c9b74fffd81d39fb9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/item/spear/tip:rock.png"
-dest_files=["res://.godot/imported/tip:rock.png-98bcb551717017309de95ca04a07f52c.ctex"]
+source_file="res://assets/item/generated/spear/tip-rock.png"
+dest_files=["res://.godot/imported/tip-rock.png-1829880c47cc6e6c9b74fffd81d39fb9.ctex"]
 
 [params]
 

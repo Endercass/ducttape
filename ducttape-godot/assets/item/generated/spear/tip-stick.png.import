@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://qqs6vh0islys"
-path="res://.godot/imported/tip:stick.png-6aaa3d65bd403af20d8e105582b69e0a.ctex"
+path="res://.godot/imported/tip-stick.png-79e86f958c389f125968e0d1f0a936aa.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/item/spear/tip:stick.png"
-dest_files=["res://.godot/imported/tip:stick.png-6aaa3d65bd403af20d8e105582b69e0a.ctex"]
+source_file="res://assets/item/generated/spear/tip-stick.png"
+dest_files=["res://.godot/imported/tip-stick.png-79e86f958c389f125968e0d1f0a936aa.ctex"]
 
 [params]
 
