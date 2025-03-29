@@ -9,7 +9,7 @@ pub enum AttributeReason {
     Display(String),
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, serde::Deserialize)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, Debug, serde::Deserialize)]
 pub enum AttributeType {
     /// How much damage the item can deal
     Sharpness,

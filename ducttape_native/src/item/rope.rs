@@ -1,8 +1,5 @@
 use ducttape_item_engine::{
-    add_base_attribute, add_base_attributes,
-    attribute::AttributeType,
-    prelude_items::stats::BasicStats,
-    item::{DummyHook, EngineHook, Item, ItemMut, SpecialAbility, Stats},
+    add_base_attribute, add_base_attributes, attribute::AttributeType, item::{DummyHook, EngineHook, Item, ItemMut, ItemTexture, SpecialAbility, Stats}, prelude_items::stats::BasicStats
 };
 
 #[derive(Debug, Clone)]
@@ -61,8 +58,8 @@ impl<THook: EngineHook> Item<THook> for Rope<THook> {
         Vec::new()
     }
 
-    fn get_texture(&self) -> Option<image::DynamicImage> {
-        Some(super::ROPE_TEXTURE.clone())
+    fn get_texture(&self) -> ItemTexture {
+        super::ROPE_TEXTURE.clone()
     }
 }
 

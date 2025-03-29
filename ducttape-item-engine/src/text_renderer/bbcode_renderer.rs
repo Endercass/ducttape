@@ -26,7 +26,17 @@ impl BBCodeRenderer for Text {
                     bbcode_string.push_str("[s]");
                 }
 
+                if text.color.is_some() {
+                    bbcode_string.push_str("[color=");
+                    bbcode_string.push_str(&text.color.as_ref().unwrap().to_string());
+                    bbcode_string.push_str("]");
+                }
+
                 bbcode_string.push_str(content);
+
+                if text.color.is_some() {
+                    bbcode_string.push_str("[/color]");
+                }
 
                 if text.strikethrough.unwrap_or(false) {
                     bbcode_string.push_str("[/s]");
@@ -43,6 +53,10 @@ impl BBCodeRenderer for Text {
                 if text.bold.unwrap_or(false) {
                     bbcode_string.push_str("[/b]");
                 }
+            }
+
+            for child in &text.extra {
+                render_text(child, bbcode_string);
             }
         }
 

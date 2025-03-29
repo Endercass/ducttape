@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dc0uyhbyyedpw"
-path="res://.godot/imported/Anvil.png-ead513aa315e2764e0c9749f830ede11.ctex"
+uid="uid://coshben8tlmsy"
+path="res://.godot/imported/stick.png-f0dcb607c15af6ee504290cfa19c314c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Anvil.png"
-dest_files=["res://.godot/imported/Anvil.png-ead513aa315e2764e0c9749f830ede11.ctex"]
+source_file="res://assets/item/stick/stick.png"
+dest_files=["res://.godot/imported/stick.png-f0dcb607c15af6ee504290cfa19c314c.ctex"]
 
 [params]
 

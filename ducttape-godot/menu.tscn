@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://bor3mr0osjrgu" path="res://thirdparty/PixelNookCave/Demo/Tiles.png" id="2_kvcxq"]
 [ext_resource type="Texture2D" uid="uid://b2lnc0beok470" path="res://thirdparty/PixelNookCave/Demo/Background.png" id="3_uawvp"]
-[ext_resource type="Texture2D" uid="uid://c3i7tqhmwh0k" path="res://Anvil.png" id="4_6v0xw"]
+[ext_resource type="Texture2D" uid="uid://dc0uyhbyyedpw" path="res://Anvil.png" id="4_6v0xw"]
 [ext_resource type="PackedScene" uid="uid://tddmq28dhb5g" path="res://hud.tscn" id="4_jh0vd"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_17lrm"]
@@ -73,9 +73,7 @@ tile_map_data = PackedByteArray("AAAAAAAAAAABAAEAAAAAAAEAAAABAAEAAAAAAAIAAAABAAE
 tile_set = SubResource("TileSet_tx0wv")
 metadata/_edit_lock_ = true
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
-
-[node name="Hud" parent="CanvasLayer" instance=ExtResource("4_jh0vd")]
+[node name="Hud" parent="." instance=ExtResource("4_jh0vd")]
 
 [node name="RigidBody2D" type="RigidBody2D" parent="."]
 position = Vector2(80, 10)

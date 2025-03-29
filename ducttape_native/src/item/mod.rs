@@ -1,7 +1,7 @@
 pub mod rope;
 
 lazy_static::lazy_static! {
-    pub static ref ROPE_TEXTURE: image::DynamicImage = image::open(asset_to_absolute("item/rope/rope.png")).unwrap();
+    pub static ref ROPE_TEXTURE: ducttape_item_engine::item::ItemTexture = image::open(asset_to_absolute("item/rope/rope.png")).ok().into();
 }
 
 fn asset_to_absolute(asset_relative_path: &str) -> String {

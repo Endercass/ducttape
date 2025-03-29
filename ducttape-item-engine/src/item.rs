@@ -1,12 +1,67 @@
 use std::{any::Any, collections::HashMap, fmt::Debug, sync::Arc};
 
 use dyn_clone::DynClone;
+use godot::{builtin::{Rect2, Vector2}, prelude::GodotConvert};
 use image::DynamicImage;
 
 use crate::{
     attribute::{Attribute, AttributeType},
     prelude_items::air::Air,
 };
+
+#[derive(Debug, Clone)]
+pub enum AnimationType {
+    Loop, // Loop the animation
+    // For the future
+}
+
+#[derive(Debug, Clone)]
+pub struct FrameProperties {
+    pub duration: f64,
+    pub width: u32,
+    pub height: u32,
+}
+
+impl FrameProperties {
+    pub fn to_rect(&self, frame_number: u32) -> Rect2 {
+        Rect2::new(
+            Vector2::new(
+                (frame_number * self.width) as f32,
+                0.0
+            ),
+            Vector2::new(
+                self.width as f32,
+                self.height as f32
+            )
+            
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ItemTexture {
+    None,
+    Image(DynamicImage),
+    Animated(DynamicImage, FrameProperties, AnimationType),
+}
+
+impl From<Option<DynamicImage>> for ItemTexture {
+    fn from(image: Option<DynamicImage>) -> Self {
+        image.map_or(ItemTexture::None, |image| image.into())
+    }
+}
+
+impl From<DynamicImage> for ItemTexture {
+    fn from(image: DynamicImage) -> Self {
+        ItemTexture::Image(image)
+    }
+}
+
+impl From<(DynamicImage,FrameProperties, AnimationType)> for ItemTexture {
+    fn from((images, frame_properties, animation_type): (DynamicImage, FrameProperties, AnimationType)) -> Self {
+        ItemTexture::Animated(images, frame_properties, animation_type)
+    }
+}
 
 /// The dynamic Item trait that represents an abstract game item. This trait will provide methods for getting every item's stats, name, and description.
 pub trait Item<THook: EngineHook = DummyHook>: Any + Debug + Send + Sync + DynClone {
@@ -19,7 +74,7 @@ pub trait Item<THook: EngineHook = DummyHook>: Any + Debug + Send + Sync + DynCl
     /// Get the item's special abilities. (This will be the final special abilities after component attributes, if present, and from the item's base special abilities)
     fn special_abilities(&self) -> Vec<Box<dyn SpecialAbility<THook>>>;
     /// Get the item's texture
-    fn get_texture(&self) -> Option<DynamicImage>;
+    fn get_texture(&self) -> ItemTexture;
 }
 
 dyn_clone::clone_trait_object!(<THook> Item<THook>);
@@ -118,7 +173,7 @@ impl std::error::Error for ItemCollectionError {}
 
 pub type ItemCollectionResult<T> = Result<T, ItemCollectionError>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ItemCollectionEvent<THook: EngineHook = DummyHook> {
     Add {
         index: usize,
@@ -147,18 +202,21 @@ pub trait ItemCollection<THook: EngineHook = DummyHook> {
     fn get_items(&self) -> &Vec<ItemStack<THook>>;
     fn get_items_mut(&mut self) -> &mut Vec<ItemStack<THook>>;
     fn listen(&mut self, f: Box<dyn Fn(ItemCollectionEvent<THook>) + Send + Sync>);
+    fn notify(&self, event: ItemCollectionEvent<THook>);
 }
 
 impl<THook: EngineHook> ItemCollection<THook> for ItemCollectionUnsized<THook> {
     fn add_item(&mut self, item: ItemStack<THook>) -> ItemCollectionResult<()> {
-        self.listeners.iter().for_each(|f| {
-            f(ItemCollectionEvent::Add {
-                index: self.items.len() - 1,
-                item: Arc::new(item.clone()),
-            })
+        self.notify(ItemCollectionEvent::Add {
+            index: self.items.len(),
+            item: Arc::new(item.clone()),
         });
         self.items.push(item);
         Ok(())
+    }
+
+    fn notify(&self, event: ItemCollectionEvent<THook>) {
+        self.listeners.iter().for_each(|f| f(event.clone()));
     }
 
     fn get_item(&self, index: usize) -> ItemCollectionResult<&ItemStack<THook>> {
@@ -195,11 +253,9 @@ impl<THook: EngineHook> ItemCollection<THook> for ItemCollectionUnsized<THook> {
                 Err(ItemCollectionError::NotFound)
             } else {
                 let item = std::mem::replace(item, Air::new_itemstack());
-                self.listeners.iter().for_each(|f| {
-                    f(ItemCollectionEvent::Remove {
-                        index,
-                        item: Arc::new(item.clone()),
-                    })
+                self.notify(ItemCollectionEvent::Remove {
+                    index,
+                    item: Arc::new(item.clone()),
                 });
                 Ok(item)
             }
@@ -225,13 +281,12 @@ impl<THook: EngineHook> ItemCollection<THook> for ItemCollectionUnsized<THook> {
     }
 
     fn refresh(&mut self) {
-        self.listeners
-            .iter()
-            .for_each(|f| f(ItemCollectionEvent::ManualRefresh));
+        self.notify(ItemCollectionEvent::ManualRefresh);
     }
 
     fn clear(&mut self) {
         self.items.clear();
+        self.notify(ItemCollectionEvent::Clear);
     }
 
     fn is_empty(&self) -> bool {
@@ -254,17 +309,19 @@ impl<THook: EngineHook> ItemCollection<THook> for ItemCollectionUnsized<THook> {
 impl<THook: EngineHook> ItemCollection<THook> for ItemCollectionSized<THook> {
     fn add_item(&mut self, item: ItemStack<THook>) -> ItemCollectionResult<()> {
         if let Some(index) = self.items.iter().position(|i| i.get_ident() == "air") {
-            self.listeners.iter().for_each(|f| {
-                f(ItemCollectionEvent::Add {
-                    index,
-                    item: Arc::new(item.clone()),
-                })
+            self.notify(ItemCollectionEvent::Add {
+                index,
+                item: Arc::new(item.clone()),
             });
             self.items[index] = item;
             Ok(())
         } else {
             Err(ItemCollectionError::Full)
         }
+    }
+
+    fn notify(&self, event: ItemCollectionEvent<THook>) {
+        self.listeners.iter().for_each(|f| f(event.clone()));
     }
 
     fn get_item(&self, index: usize) -> ItemCollectionResult<&ItemStack<THook>> {
@@ -301,11 +358,9 @@ impl<THook: EngineHook> ItemCollection<THook> for ItemCollectionSized<THook> {
                 Err(ItemCollectionError::NotFound)
             } else {
                 let item = std::mem::replace(item, Air::new_itemstack());
-                self.listeners.iter().for_each(|f| {
-                    f(ItemCollectionEvent::Remove {
-                        index,
-                        item: Arc::new(item.clone()),
-                    })
+                self.notify(ItemCollectionEvent::Remove {
+                    index,
+                    item: Arc::new(item.clone()),
                 });
                 Ok(item)
             }
@@ -331,13 +386,12 @@ impl<THook: EngineHook> ItemCollection<THook> for ItemCollectionSized<THook> {
     }
 
     fn refresh(&mut self) {
-        self.listeners
-            .iter()
-            .for_each(|f| f(ItemCollectionEvent::ManualRefresh));
+        self.notify(ItemCollectionEvent::ManualRefresh);
     }
 
     fn clear(&mut self) {
         self.items.clear();
+        self.notify(ItemCollectionEvent::Clear);
     }
 
     fn is_empty(&self) -> bool {
@@ -486,7 +540,7 @@ impl<THook: EngineHook> Item<THook> for ItemStack<THook> {
         self.item.special_abilities()
     }
 
-    fn get_texture(&self) -> Option<DynamicImage> {
+    fn get_texture(&self) -> ItemTexture {
         self.item.get_texture()
     }
 }

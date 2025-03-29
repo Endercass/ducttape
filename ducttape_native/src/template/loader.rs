@@ -2,11 +2,11 @@ use std::{collections::HashMap, fs, io::Cursor, sync::Arc};
 
 use ducttape_item_engine::{
     attribute::{Attribute, AttributeModifier, AttributeReason, AttributeType},
-    item::{EngineHook, Item, SpecialAbility, Stats},
+    item::{AnimationType, EngineHook, FrameProperties, Item, ItemTexture, SpecialAbility, Stats},
     prelude_items::stats::BasicStatsBuilder,
 };
 use godot::{
-    classes::{Image, ImageTexture, ProjectSettings},
+    classes::{AtlasTexture, Image, ImageTexture, ProjectSettings, Timer},
     prelude::*,
 };
 use hex_color::HexColor;
@@ -27,6 +27,33 @@ pub fn image_to_texture(image: DynamicImage) -> Option<Gd<ImageTexture>> {
     img.load_png_from_buffer(&PackedByteArray::from(buf.into_inner()));
 
     ImageTexture::create_from_image(&img)
+}
+
+pub fn anim_to_texture(atlas: DynamicImage, frame_properties: FrameProperties, animation_type: AnimationType) -> Option<(Gd<AtlasTexture>, Gd<Timer>)> {
+    let mut img = AtlasTexture::new_gd();
+
+    let last_frame = atlas.width() / frame_properties.width;
+    img.set_atlas(&image_to_texture(atlas)?);
+    img.set_region(frame_properties.to_rect(0));
+
+    let mut timer = Timer::new_alloc();
+    timer.set_wait_time(frame_properties.duration);
+    timer.set_one_shot(false);
+
+    let mut frame = 0;
+
+    timer.connect("timeout", &Callable::from_local_fn("_on_timeout", {
+        let mut img = img.clone();
+        move |_| {
+            frame = (frame + 1) % last_frame;
+            img.set_region(frame_properties.to_rect(frame));
+            Ok(Variant::nil())
+        }
+    }));    
+
+    timer.set_autostart(true);
+
+    Some((img, timer))
 }
 
 #[derive(Debug, Deserialize)]
@@ -148,7 +175,7 @@ impl TemplateComponentRenderer {
         }
     }
 
-    pub fn render(&self) -> image::DynamicImage {
+    pub fn render(&self) -> ItemTexture{
         let mut image = image::DynamicImage::new_rgba8(self.size.0, self.size.1);
 
         for masked_image in &self.component_map {
@@ -165,7 +192,7 @@ impl TemplateComponentRenderer {
             }
         }
 
-        image
+        image.into()
     }
 }
 
@@ -241,7 +268,7 @@ impl<THook: EngineHook> Item<THook> for TemplateItem<THook> {
         self.special_abilities.clone()
     }
 
-    fn get_texture(&self) -> Option<image::DynamicImage> {
+    fn get_texture(&self) -> ItemTexture {
         let mut renderer = TemplateComponentRenderer::new((32, 32));
 
         for (component, item) in &self.components {
@@ -251,7 +278,7 @@ impl<THook: EngineHook> Item<THook> for TemplateItem<THook> {
                 });
         }
 
-        Some(renderer.render())
+        renderer.render()
     }
 }
 

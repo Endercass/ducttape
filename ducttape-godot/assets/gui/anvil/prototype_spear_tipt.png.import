@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dc0uyhbyyedpw"
-path="res://.godot/imported/Anvil.png-ead513aa315e2764e0c9749f830ede11.ctex"
+uid="uid://cwxtgmt280jkb"
+path="res://.godot/imported/prototype_spear_tipt.png-608d1dd2272871313deb02300546892b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Anvil.png"
-dest_files=["res://.godot/imported/Anvil.png-ead513aa315e2764e0c9749f830ede11.ctex"]
+source_file="res://assets/gui/anvil/prototype_spear_tipt.png"
+dest_files=["res://.godot/imported/prototype_spear_tipt.png-608d1dd2272871313deb02300546892b.ctex"]
 
 [params]
 

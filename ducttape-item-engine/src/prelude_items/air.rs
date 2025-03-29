@@ -1,4 +1,4 @@
-use crate::item::{DummyHook, EngineHook, Item, ItemMut, ItemStack, SpecialAbility, Stats};
+use crate::item::{DummyHook, EngineHook, Item, ItemMut, ItemStack, ItemTexture, SpecialAbility, Stats};
 use std::sync::Arc;
 
 use super::stats::BasicStats;
@@ -45,8 +45,9 @@ impl<THook: EngineHook> Item<THook> for Air<THook> {
         vec![]
     }
 
-    fn get_texture(&self) -> Option<image::DynamicImage> {
-        None
+    fn get_texture(&self) -> ItemTexture {
+        // None
+        super::AIR_TEXTURE.clone()
     }
 }
 

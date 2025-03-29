@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://coliemfil3hfv"
-path="res://.godot/imported/inventory slot.png-e08819bbb390b667d20ca75a102e00b0.ctex"
+uid="uid://dhbtd3xstc3n8"
+path="res://.godot/imported/overlay_spear.png-5540e8c3988ac3ee8210fc14859e11c8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://inventory slot.png"
-dest_files=["res://.godot/imported/inventory slot.png-e08819bbb390b667d20ca75a102e00b0.ctex"]
+source_file="res://assets/gui/anvil/overlay_spear.png"
+dest_files=["res://.godot/imported/overlay_spear.png-5540e8c3988ac3ee8210fc14859e11c8.ctex"]
 
 [params]
 

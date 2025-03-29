@@ -1,7 +1,7 @@
 use crate::{
     add_base_attribute, add_base_attributes,
     attribute::AttributeType,
-    item::{DummyHook, EngineHook, Item, ItemMut, SpecialAbility, Stats},
+    item::{DummyHook, EngineHook, Item, ItemMut, ItemTexture, SpecialAbility, Stats},
 };
 
 use super::stats::BasicStats;
@@ -63,8 +63,8 @@ impl<THook: EngineHook> Item<THook> for Rock<THook> {
         Vec::new()
     }
 
-    fn get_texture(&self) -> Option<image::DynamicImage> {
-        None
+    fn get_texture(&self) -> ItemTexture {
+        super::ROCK_TEXTURE.clone()
     }
 }
 

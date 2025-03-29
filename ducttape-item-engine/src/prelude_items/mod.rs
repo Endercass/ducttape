@@ -1,6 +1,20 @@
+use image::GenericImageView as _;
+
 pub mod air;
 pub mod rock;
 pub mod stats;
+pub mod dev_tablet;
+
+lazy_static::lazy_static! {
+    pub static ref MISSING_TEXTURE: image::DynamicImage = image::open(asset_to_absolute("missing.png")).unwrap();
+    pub static ref ROCK_TEXTURE: crate::item::ItemTexture = image::open(asset_to_absolute("rock.png")).ok().into();
+    pub static ref AIR_TEXTURE: crate::item::ItemTexture = image::open(asset_to_absolute("air.png")).ok().into();
+    pub static ref DEV_TABLET_TEXTURE: crate::item::ItemTexture = image::open(asset_to_absolute("tablet.png")).map_or(crate::item::ItemTexture::None, |atlas| (atlas, crate::item::FrameProperties {width: 32, height: 32, duration: 0.5}, crate::item::AnimationType::Loop).into());
+}
+
+fn asset_to_absolute(asset_relative_path: &str) -> String {
+    format!("{}/assets/{}", env!("CARGO_MANIFEST_DIR"), asset_relative_path)
+}
 
 #[cfg(test)]
 mod tests {
@@ -10,7 +24,7 @@ mod tests {
         attribute::{
             Attribute, AttributeModifier, AttributeParser, AttributeReason, AttributeType,
         },
-        item::{DummyHook, EngineHook, Item, ItemMut, SpecialAbility, Stats},
+        item::{DummyHook, EngineHook, Item, ItemMut, ItemTexture, SpecialAbility, Stats},
         text_renderer::ansi_renderer::AnsiRenderer,
     };
     use std::collections::HashMap;
@@ -18,15 +32,13 @@ mod tests {
     #[derive(Debug, Clone)]
     pub struct Ball<THook: EngineHook = DummyHook> {
         stats: BallStats,
-        color: u32,
         phantom: std::marker::PhantomData<THook>,
     }
 
     impl<THook: EngineHook> Ball<THook> {
-        pub fn new(color: u32) -> Self {
+        pub fn new() -> Self {
             Ball {
                 stats: BallStats::default(),
-                color,
                 phantom: std::marker::PhantomData,
             }
         }
@@ -49,8 +61,8 @@ mod tests {
             Vec::new()
         }
 
-        fn get_texture(&self) -> Option<image::DynamicImage> {
-            None
+        fn get_texture(&self) -> ItemTexture {
+            None.into()
         }
     }
 
@@ -162,7 +174,7 @@ mod tests {
 
     #[test]
     fn ball_item() {
-        let ball: Ball = Ball::new(0xFFFFFF);
+        let ball: Ball = Ball::new();
         let stats = ball.get_stats();
         let parser = AttributeParser::from(stats.get_all_attributes());
 

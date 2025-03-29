@@ -27,6 +27,7 @@ window/size/mode=4
 window/stretch/mode="viewport"
 window/stretch/aspect="keep_height"
 window/stretch/scale_mode="integer"
+window/size/mode.editor=0
 
 [gui]
 

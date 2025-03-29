@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dc0uyhbyyedpw"
-path="res://.godot/imported/Anvil.png-ead513aa315e2764e0c9749f830ede11.ctex"
+uid="uid://bv4veo64lvpug"
+path="res://.godot/imported/ducttape.png-3c6f90673080cef66293237d6f07649f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Anvil.png"
-dest_files=["res://.godot/imported/Anvil.png-ead513aa315e2764e0c9749f830ede11.ctex"]
+source_file="res://assets/item/ducttape/ducttape.png"
+dest_files=["res://.godot/imported/ducttape.png-3c6f90673080cef66293237d6f07649f.ctex"]
 
 [params]
 
