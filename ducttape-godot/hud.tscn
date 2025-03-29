@@ -7,3 +7,9 @@ metadata/_edit_lock_ = true
 texture_filter = 1
 offset_right = 40.0
 offset_bottom = 40.0
+
+[node name="Label" type="RichTextLabel" parent="."]
+offset_right = 208.0
+offset_bottom = 18.0
+bbcode_enabled = true
+text = "[color=gray]In Active Development[/color]"
