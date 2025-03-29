@@ -1,7 +1,7 @@
 use std::{any::Any, collections::HashMap, fmt::Debug, sync::Arc};
 
 use dyn_clone::DynClone;
-use godot::{builtin::{Rect2, Vector2}, prelude::GodotConvert};
+use godot::builtin::{Rect2, Vector2};
 use image::DynamicImage;
 
 use crate::{

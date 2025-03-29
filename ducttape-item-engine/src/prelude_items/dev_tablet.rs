@@ -17,11 +17,11 @@ impl Default for DevTablet {
 
 impl DevTablet {
     pub fn new() -> Self {
-        let rock = DevTablet {
+        
+        DevTablet {
             phantom: std::marker::PhantomData,
             stats: BasicStats::new(),
-        };
-        rock
+        }
     }
 }
 

@@ -29,7 +29,7 @@ pub fn image_to_texture(image: DynamicImage) -> Option<Gd<ImageTexture>> {
     ImageTexture::create_from_image(&img)
 }
 
-pub fn anim_to_texture(atlas: DynamicImage, frame_properties: FrameProperties, animation_type: AnimationType) -> Option<(Gd<AtlasTexture>, Gd<Timer>)> {
+pub fn anim_to_texture(atlas: DynamicImage, frame_properties: FrameProperties, _animation_type: AnimationType) -> Option<(Gd<AtlasTexture>, Gd<Timer>)> {
     let mut img = AtlasTexture::new_gd();
 
     let last_frame = atlas.width() / frame_properties.width;

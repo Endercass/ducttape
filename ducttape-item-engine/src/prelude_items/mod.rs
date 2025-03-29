@@ -1,5 +1,3 @@
-use image::GenericImageView as _;
-
 pub mod air;
 pub mod rock;
 pub mod stats;

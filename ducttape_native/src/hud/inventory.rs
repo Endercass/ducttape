@@ -1,15 +1,13 @@
-use std::{collections, sync::{mpsc, Arc, Mutex}};
+use std::sync::{mpsc, Arc, Mutex};
 
-use bevy::asset::ron::de;
-use ducttape_item_engine::{attribute::{AttributeParser, AttributeType}, item::{Item, ItemCollection, ItemCollectionEvent, ItemStack, ItemTexture}, prelude_items::{air::Air, MISSING_TEXTURE}, text_renderer::bbcode_renderer::BBCodeRenderer};
+use ducttape_item_engine::{item::{Item, ItemCollection, ItemCollectionEvent, ItemStack, ItemTexture}, prelude_items::{air::Air, MISSING_TEXTURE}};
 use godot::{
     classes::{
-        control::{MouseFilter, SizeFlags}, CenterContainer, ColorRect, Control, GridContainer, HBoxContainer, IControl, IGridContainer, IPanel, InputEvent, InputEventMouseButton, InputEventMouseMotion, Label, MarginContainer, Panel, ResourceLoader, RichTextLabel, ScrollContainer, StyleBoxFlat, Texture2D, TextureRect, VBoxContainer
-    }, global::{HorizontalAlignment, VerticalAlignment}, obj::NewAlloc, prelude::*
+        control::{MouseFilter, SizeFlags}, Control, GridContainer, HBoxContainer, IControl, IGridContainer, IPanel, InputEvent, InputEventMouseButton, InputEventMouseMotion, MarginContainer, Panel, ResourceLoader, RichTextLabel, ScrollContainer, StyleBoxFlat, Texture2D, TextureRect, VBoxContainer
+    }, obj::NewAlloc, prelude::*
 };
-use valence_text::{IntoText, Text};
 
-use crate::{item, singletons::inventory::INVENTORY, template::loader::{anim_to_texture, image_to_texture}};
+use crate::{singletons::inventory::INVENTORY, template::loader::{anim_to_texture, image_to_texture}};
 
 #[derive(GodotClass)]
 #[class(base = GridContainer)]
@@ -70,7 +68,7 @@ impl InventoryContainer {
             let inventory = INVENTORY.lock().unwrap();
             // slot.set_item(InventoryItem::new(inventory.get_item(slot.get_slot_index() as usize).unwrap().clone()));
             // let item = inventory.get_item(index as usize).unwrap().clone();
-            let item = inventory.get_item(index as usize).cloned().unwrap_or_else(|_| Air::new_itemstack());
+            let item = inventory.get_item(index).cloned().unwrap_or_else(|_| Air::new_itemstack());
             let item_node = InventoryItem::new(item);
             
             slot.bind_mut().set_item(item_node.clone());
@@ -199,7 +197,7 @@ impl InventoryItemSlot {
         if self.base().get_global_rect().contains_point(pos) {
             // We are the destination
             if item != self.item.clone().unwrap() {
-                if let Some(item) = item.get_parent().unwrap().try_cast::<InventoryItemSlot>().ok() {
+                if let Ok(item) = item.get_parent().unwrap().try_cast::<InventoryItemSlot>() {
                     let old_slot_number = item.bind().get_slot_index();
                     godot_print!("Old item slot number: {:?}", old_slot_number);
                     let new_slot_number = self.slot_index;
@@ -243,19 +241,12 @@ impl IControl for InventoryItemSlot {
     }
 }
 
+#[derive(Default)]
 pub struct GuiItemState {
     pub dragging: bool,
     pub mouse_down: bool,
 }
 
-impl Default for GuiItemState {
-    fn default() -> Self {
-        Self {
-            dragging: false,
-            mouse_down: false,
-        }
-    }
-}
 
 #[derive(GodotClass)]
 #[class(base = Control, no_init)]
@@ -369,10 +360,6 @@ impl InventoryItem {
             }
         }
 
-    }
-
-    fn request_rerender(&mut self) {
-        self.base_mut().emit_signal("request_rerender", &[]);
     }
 
     fn is_textured(&self) -> bool {
@@ -713,7 +700,7 @@ impl IPanel for Inventory {
 
         content_box.add_child(&grid_margin);
 
-        let mut grid = InventoryContainer::new_alloc();
+        let grid = InventoryContainer::new_alloc();
 
         // let mut grid = GridContainer::new_alloc();
 

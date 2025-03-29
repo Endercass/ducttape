@@ -29,7 +29,7 @@ impl BBCodeRenderer for Text {
                 if text.color.is_some() {
                     bbcode_string.push_str("[color=");
                     bbcode_string.push_str(&text.color.as_ref().unwrap().to_string());
-                    bbcode_string.push_str("]");
+                    bbcode_string.push(']');
                 }
 
                 bbcode_string.push_str(content);
