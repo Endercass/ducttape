@@ -1,0 +1,12 @@
+[gd_resource type="TileSet" load_steps=3 format=3 uid="uid://dpghb5b27210g"]
+
+[ext_resource type="Texture2D" uid="uid://2sp5jrq8r5ne" path="res://thirdparty/PixelNookCave/Demo/Spikes-Upscale.png" id="1_7krxd"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_7krxd"]
+texture = ExtResource("1_7krxd")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+
+[resource]
+tile_size = Vector2i(32, 32)
+sources/0 = SubResource("TileSetAtlasSource_7krxd")

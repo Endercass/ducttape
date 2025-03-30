@@ -32,6 +32,8 @@ pub struct Player {
     jump_buffer_timer: f64,
     #[export]
     wall_jump_timer: f32,
+    #[export]
+    zoom: f32,
 
     state: PlayerState,
 }
@@ -219,13 +221,16 @@ impl ICharacterBody2D for Player {
             jump_buffer_timer: 0.1,
             wall_jump_timer: 0.1,
             jump_height: 100.0,
+            zoom: 1.5,
             state: PlayerState::default(),
         }
     }
 
     fn ready(&mut self) {
         // Add a camera to the player
-        let cam = Camera2D::new_alloc();
+        let mut cam = Camera2D::new_alloc();
+        cam.set_zoom(Vector2::new(self.zoom, self.zoom));
+
         self.base_mut().add_child(&cam);
     }
 
