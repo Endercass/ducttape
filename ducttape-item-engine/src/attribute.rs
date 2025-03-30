@@ -216,11 +216,13 @@ impl AttributeParser {
     pub fn aggregate_to_component(&self, at: AttributeType) -> Text {
         let mut txt = "".into_text();
         if let Some(vec) = self.attributes.get(&at) {
+            let mut vec = vec.clone();
+            vec.sort_by_key(|a| a.priority);
             for attribute in vec.iter() {
                 txt = txt + attribute.clone() + "\n";
             }
         }
-        txt + self.aggregate_to_fixed_attribute(at) + " (✨)"
+        txt + self.aggregate_to_fixed_attribute(at)
     }
 
     pub fn aggregate_to_components(&self) -> HashMap<AttributeType, Text> {
@@ -235,9 +237,11 @@ impl<'a> IntoText<'a> for AttributeParser {
     fn into_cow_text(self) -> std::borrow::Cow<'a, Text> {
         let mut txt = "".into_text();
 
-        self.aggregate_to_components().iter().for_each(|(at, c)| {
-            txt = txt.clone() + *at + ": " + "\n" + c.clone() + "\n";
-        });
+        let mut components: Vec<_> = self.aggregate_to_components().into_iter().collect();
+        components.sort_by_key(|(at, _)| *at);
+        for (at, c) in components {
+            txt = txt + at + ":\n" + c + "\n";
+        }
 
         txt.into_cow_text()
     }

@@ -1,11 +1,12 @@
 use std::sync::{mpsc, Arc, Mutex};
 
-use ducttape_item_engine::{item::{Item, ItemCollection, ItemCollectionEvent, ItemStack, ItemTexture}, prelude_items::{air::Air, MISSING_TEXTURE}};
+use ducttape_item_engine::{attribute::{AttributeParser, AttributeType}, item::{Item, ItemCollection, ItemCollectionEvent, ItemStack, ItemTexture}, prelude_items::{air::Air, MISSING_TEXTURE}, text_renderer::bbcode_renderer::BBCodeRenderer as _};
 use godot::{
     classes::{
-        control::{MouseFilter, SizeFlags}, Control, GridContainer, HBoxContainer, IControl, IGridContainer, IPanel, InputEvent, InputEventMouseButton, InputEventMouseMotion, MarginContainer, Panel, ResourceLoader, RichTextLabel, ScrollContainer, StyleBoxFlat, Texture2D, TextureRect, VBoxContainer
+        control::{MouseFilter, SizeFlags}, Control, GridContainer, HBoxContainer, IControl, IGridContainer, IPanel, IRichTextLabel, InputEvent, InputEventMouseButton, InputEventMouseMotion, MarginContainer, Panel, ResourceLoader, RichTextLabel, ScrollContainer, StyleBoxFlat, Texture2D, TextureRect, VBoxContainer
     }, obj::NewAlloc, prelude::*
 };
+use valence_text::IntoText;
 
 use crate::{singletons::inventory::INVENTORY, template::loader::{anim_to_texture, image_to_texture}};
 
@@ -25,13 +26,16 @@ impl InventoryContainer {
         if let Some(slot) = item.get_parent().and_then(|parent| parent.try_cast::<InventoryItemSlot>().ok()) {
             if active {
                 self.active_item = slot.bind().get_slot_index();
-            } else {
-                self.active_item = -1;
             }
+
+            self.base_mut().emit_signal("change_active_item", &[]);
 
             godot_print!("Active item: {:?}", self.active_item);
         }
     }
+
+    #[signal]
+    fn change_active_item(&self);
 
     #[signal]
     fn grid_resized(&self, width: i32);
@@ -58,6 +62,11 @@ impl InventoryContainer {
     #[func]
     pub fn get_width(&self) -> i32 {
         self.width
+    }
+
+    #[func]
+    pub fn get_active_item(&self) -> i32 {
+        self.active_item
     }
 
     #[func]
@@ -424,6 +433,104 @@ impl IControl for InventoryItem {
     }
 }
 
+#[derive(Clone)]
+pub enum StatDisplay {
+    Hide,
+    Summary,
+    Attribute(AttributeType),
+}
+
+#[derive(GodotClass)]
+#[class(base = RichTextLabel)]
+pub struct StatsContainer {
+    base: Base<RichTextLabel>,
+    item: Option<ItemStack>,
+    display: StatDisplay,
+}
+
+impl StatsContainer {
+    pub fn set_item(&mut self, item: ItemStack) {
+        self.item = Some(item);
+    }
+
+    pub fn set_display(&mut self, display: StatDisplay) {
+        self.display = display;
+    }
+
+    pub fn clear(&mut self) {
+        self.item = None;
+        self.display = StatDisplay::Hide;
+    }
+}
+
+#[godot_api]
+impl StatsContainer {
+    #[signal]
+    fn request_rerender(&self);
+
+    #[func]
+    fn _on_request_rerender(&mut self) {
+        let item = self.item.clone().unwrap();
+        let display = self.display.clone();
+
+        let mut base = self.base_mut();
+        base.set_text("");
+
+        match display {
+            StatDisplay::Hide => {
+                base.set_text("");
+            },
+            StatDisplay::Summary => {
+                let text = AttributeParser::from(item.get_stats().get_all_attributes()).into_text();
+
+                base.set_text(&text.to_bbcode_string());
+            },
+            StatDisplay::Attribute(attr) => {
+                let text = AttributeParser::from(item.get_stats().get_all_attributes()).aggregate_to_component(attr).into_text();
+
+                base.set_text(&text.to_bbcode_string());
+            }
+        }
+    }
+}
+
+#[godot_api]
+impl IRichTextLabel for StatsContainer {
+    fn init(base: Base<RichTextLabel>) -> Self {
+        Self {
+            base,
+            item: None,
+            display: StatDisplay::Hide,
+        }
+    }
+
+    fn ready(&mut self) {
+        let self_gd = self.to_gd();
+        let mut base = self.base_mut();
+        
+        base.set_use_bbcode(true);
+        base.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        base.set_v_size_flags(SizeFlags::EXPAND_FILL);
+        base.add_theme_font_size_override("normal_font_size", 12);
+        
+        base.connect("request_rerender", &Callable::from_object_method(&self_gd, "_on_request_rerender"));
+    }
+}
+
+
+// #[derive(GodotClass)]
+// #[class(base = ScrollContainer)]
+// pub struct StatsScroller {
+//     base: Base<ScrollContainer>,
+// }
+
+// #[godot_api]
+// impl StatsScroller {
+//     #[func]
+//     fn _on_request_rerender(&mut self) {
+      
+//     }
+// }
 
 
 #[derive(GodotClass)]
@@ -432,7 +539,7 @@ pub struct Inventory {
     base: Base<Panel>,
     grid: Option<Gd<InventoryContainer>>,
     attrs: Option<Gd<VBoxContainer>>,
-    stats: Option<Gd<RichTextLabel>>,
+    stats: Option<Gd<StatsContainer>>,
     receiver: Option<mpsc::Receiver<ItemCollectionEvent>>,
 }
 
@@ -700,7 +807,7 @@ impl IPanel for Inventory {
 
         content_box.add_child(&grid_margin);
 
-        let grid = InventoryContainer::new_alloc();
+        let mut grid = InventoryContainer::new_alloc();
 
         // let mut grid = GridContainer::new_alloc();
 
@@ -750,16 +857,23 @@ impl IPanel for Inventory {
 
         content_box.add_child(&stats_margin);
         
-        let mut stats = RichTextLabel::new_alloc(); 
+        let stats = StatsContainer::new_alloc();
 
-        stats.set_h_size_flags(SizeFlags::EXPAND_FILL);
-        stats.set_v_size_flags(SizeFlags::EXPAND_FILL);
+        grid.clone().connect("change_active_item", &Callable::from_local_fn("change_active_item", {
+            let mut stats = stats.clone();
+            let mut grid = grid.clone();
+            move |_| {
+                let grid = grid.bind_mut();
+                let item = INVENTORY.lock().unwrap().get_item(grid.get_active_item() as usize).cloned().unwrap_or_else(|_| Air::new_itemstack());
+                stats.bind_mut().set_item(item);
+                stats.bind_mut().set_display(StatDisplay::Summary);
 
-        stats.set_use_bbcode(true);
-        // stats.set_text("St/ats go here");
-        stats.set_text("[color=#ff0000]Stats go here[/color]");
-        godot_print_rich!("[color=#ff0000]Stats go here[/color]");    
+                stats.emit_signal("request_rerender", &[]);
 
+                Ok(Variant::nil())
+            }
+        }));
+        
         // gui.add_child(&stats);
         stats_margin.add_child(&stats);
 
