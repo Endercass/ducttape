@@ -1,10 +1,10 @@
 use std::sync::{mpsc, Arc, Mutex};
 
-use ducttape_item_engine::{attribute::{AttributeParser, AttributeType}, item::{Item, ItemCollection, ItemCollectionEvent, ItemStack, ItemTexture}, prelude_items::{air::Air, MISSING_TEXTURE}, text_renderer::bbcode_renderer::BBCodeRenderer as _};
+use ducttape_item_engine::{attribute::{AttributeParser, AttributeType, ALL_ATTRIBUTE_TYPES}, item::{Item, ItemCollection, ItemCollectionEvent, ItemStack, ItemTexture}, prelude_items::{air::Air, MISSING_TEXTURE}, text_renderer::bbcode_renderer::BBCodeRenderer as _};
 use godot::{
     classes::{
-        control::{MouseFilter, SizeFlags}, Control, GridContainer, HBoxContainer, IControl, IGridContainer, IPanel, IRichTextLabel, InputEvent, InputEventMouseButton, InputEventMouseMotion, MarginContainer, Panel, ResourceLoader, RichTextLabel, ScrollContainer, StyleBoxFlat, Texture2D, TextureRect, VBoxContainer
-    }, obj::NewAlloc, prelude::*
+        control::{MouseFilter, SizeFlags}, Control, GridContainer, HBoxContainer, IControl, IGridContainer, IPanel, IRichTextLabel, IScrollContainer, InputEvent, InputEventMouseButton, InputEventMouseMotion, Label, MarginContainer, Panel, ResourceLoader, RichTextLabel, ScrollContainer, StyleBoxFlat, Texture2D, TextureRect, VBoxContainer
+    }, global::{HorizontalAlignment, VerticalAlignment}, obj::NewAlloc, prelude::*
 };
 use valence_text::IntoText;
 
@@ -517,20 +517,186 @@ impl IRichTextLabel for StatsContainer {
     }
 }
 
+#[derive(GodotClass)]
+#[class(base = ScrollContainer)]
+pub struct StatsScroller {
+    base: Base<ScrollContainer>,
+    container: Option<Gd<VBoxContainer>>,
+    display: StatDisplay,
+    item: Option<ItemStack>,
+}
 
-// #[derive(GodotClass)]
-// #[class(base = ScrollContainer)]
-// pub struct StatsScroller {
-//     base: Base<ScrollContainer>,
-// }
+#[godot_api]
+impl StatsScroller {
+    #[signal]
+    fn change_display(&self);
 
-// #[godot_api]
-// impl StatsScroller {
-//     #[func]
-//     fn _on_request_rerender(&mut self) {
-      
-//     }
-// }
+    #[signal]
+    fn change_item(&self);
+
+    #[func]
+    fn _on_change_item(&mut self) {
+        let self_gd = self.to_gd();
+        let mut container = self.container.clone().unwrap();
+
+        container.get_children().iter_shared().for_each(|child| {
+            container.remove_child(&child);
+        });
+
+        let mut hide = Label::new_alloc();
+        hide.set_text("❌");
+
+        hide.set_custom_minimum_size(Vector2::new(32.0, 32.0));
+        hide.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        hide.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+        hide.set_vertical_alignment(VerticalAlignment::CENTER);
+        hide.set_horizontal_alignment(HorizontalAlignment::CENTER);
+        hide.set_mouse_filter(MouseFilter::STOP);
+
+        hide.connect("mouse_entered", &Callable::from_local_fn("_on_mouse_entered", {
+            let mut self_gd = self_gd.clone();
+            move |_| {
+                self_gd.bind_mut().set_display(StatDisplay::Hide);
+                Ok(Variant::nil())
+            }
+        }));
+
+        container.add_child(&hide);
+
+        let mut summary = Label::new_alloc();
+        summary.set_text("🚩");
+
+        summary.set_custom_minimum_size(Vector2::new(32.0, 32.0));
+        summary.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        summary.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+        summary.set_vertical_alignment(VerticalAlignment::CENTER);
+        summary.set_horizontal_alignment(HorizontalAlignment::CENTER);
+        summary.set_mouse_filter(MouseFilter::STOP);
+
+        summary.connect("mouse_entered", &Callable::from_local_fn("_on_mouse_entered", {
+            let mut self_gd = self_gd.clone();
+            move |_| {
+                self_gd.bind_mut().set_display(StatDisplay::Summary);
+                Ok(Variant::nil())
+            }
+        }));
+
+        container.add_child(&summary);
+
+        // clear the selected display and repopulate it with the the new display options (Options may be grayed out if the item does not have the attribute)
+        ALL_ATTRIBUTE_TYPES.iter().for_each(|attr| {
+            // if the item has the attribute, add it to the display
+            // if the item does not have the attribute, gray it out
+
+            let mut label = Label::new_alloc();
+            label.set_custom_minimum_size(Vector2::new(32.0, 32.0));
+            label.set_h_size_flags(SizeFlags::EXPAND_FILL);
+            label.set_v_size_flags(SizeFlags::SHRINK_CENTER);
+            label.set_vertical_alignment(VerticalAlignment::CENTER);
+            label.set_horizontal_alignment(HorizontalAlignment::CENTER);
+            label.set_text(&attr.into_text().to_bbcode_string());
+            label.set_mouse_filter(MouseFilter::STOP);
+
+            if self.item.clone().unwrap().get_stats().get_all_attributes().contains_key(attr) {
+                label.set_modulate(Color::from_rgb(1.0, 1.0, 1.0));
+            } else {
+                label.set_modulate(Color::from_rgb(0.5, 0.5, 0.5));
+            }
+
+            label.connect("mouse_entered", &Callable::from_local_fn("_on_mouse_entered", {
+                let mut self_gd = self_gd.clone();
+                let attr = attr.clone();
+                move |_| {
+                    self_gd.bind_mut().set_display(StatDisplay::Attribute(attr));
+                    Ok(Variant::nil())
+                }
+            }));
+
+            container.add_child(&label);
+        });
+    }
+
+    #[func]
+    fn _on_change_display(&mut self) {
+        // highlight the child that is currently selected
+        let display = self.display.clone();
+        let container = self.container.clone().unwrap();
+
+        Into::<Vec<Gd<Node>>>::into(&container.get_children()) .iter_mut().for_each(|child| {
+            let mut child = child.clone().cast::<Label>();
+            let text = child.get_text();
+
+            let is_selected = match display {
+                StatDisplay::Hide => text == "❌".into(),
+                StatDisplay::Summary => text == "🚩".into(),
+                StatDisplay::Attribute(attr) => text == attr.into_text().to_bbcode_string().into()
+            };
+
+            if is_selected {
+                child.set_modulate(Color::from_rgb(0.75, 0.75, 0.75));
+            } else {
+                child.set_modulate(Color::from_rgb(1.0, 1.0, 1.0));
+            }
+        });
+    }
+
+    fn set_item(&mut self, item: ItemStack) {
+        self.item = Some(item);
+        self.base_mut().emit_signal("change_item", &[]);
+    }
+
+    fn set_display(&mut self, display: StatDisplay) {
+        self.display = display;
+        self.base_mut().emit_signal("change_display", &[]);
+    }
+
+    fn get_item(&self) -> ItemStack {
+        self.item.clone().unwrap()
+    }
+
+    fn get_display(&self) -> StatDisplay {
+        self.display.clone()
+    }
+}
+
+#[godot_api]
+impl IScrollContainer for StatsScroller {
+    fn init(base: Base<ScrollContainer>) -> Self {
+        Self {
+            base,
+            display: StatDisplay::Hide,
+            container: None,
+            item: None,
+        }
+    }
+
+    fn ready(&mut self) {
+        let self_gd = self.to_gd();
+        let mut base = self.base_mut();
+        base.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        base.set_v_size_flags(SizeFlags::EXPAND_FILL);
+        base.set_custom_minimum_size(Vector2::new(36.0, 144.0));
+
+        
+        let mut container = VBoxContainer::new_alloc();
+        container.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        container.set_v_size_flags(SizeFlags::EXPAND_FILL);
+        container.set_custom_minimum_size(Vector2::new(36.0, 144.0));
+        
+        container.add_theme_constant_override("separation", 4);
+        container.add_theme_font_size_override("normal", 24);
+        
+        base.add_child(&container);
+
+        base.connect("change_display", &Callable::from_object_method(&self_gd, "_on_change_display"));
+        base.connect("change_item", &Callable::from_object_method(&self_gd, "_on_change_item"));
+        
+        drop(base);
+
+        self.container = Some(container);
+
+    }
+}
 
 
 #[derive(GodotClass)]
@@ -538,7 +704,6 @@ impl IRichTextLabel for StatsContainer {
 pub struct Inventory {
     base: Base<Panel>,
     grid: Option<Gd<InventoryContainer>>,
-    attrs: Option<Gd<VBoxContainer>>,
     stats: Option<Gd<StatsContainer>>,
     receiver: Option<mpsc::Receiver<ItemCollectionEvent>>,
 }
@@ -562,199 +727,9 @@ impl CenterAnchor for Control {
 
 impl Inventory {
     fn render(&mut self) {
-        // if self.grid.is_none() {
-        //     return;
-        // }
-
         if let Some(grid) = self.grid.as_mut() {
             grid.emit_signal("request_rerender", &[]);
         }
-
-
-
-
-        
-    //     let inventory = INVENTORY.lock().unwrap();
-    //     let grid = self.grid.as_mut().unwrap();
-    //     let attrs = self.attrs.as_mut().unwrap();
-    //     let stats = self.stats.as_mut().unwrap().clone();
-        
-    //     grid.get_children().iter_shared().for_each(|child| {
-    //         grid.remove_child(&child);
-    //     });
-        
-    //     let pos = grid.get_global_position();
-
-    //     let mut slot_position_field: Vec<Vector2> = vec![];
-
-    //     inventory.iter().for_each(|item| {
-    //         // More performant to store the stats in a cache when the inventory is updated rather than
-    //         // re-parsing the attributes every time the mouse enters the item slot
-    //         let mut statbox_cache: Vec<(AttributeType, Text)> = AttributeParser::from(item.get_stats().get_all_attributes()).aggregate_to_components().iter().map(|(attr, text)| (attr.clone(), text.clone())).collect();
-    //         statbox_cache.sort_by(|(a, _), (b, _)| a.cmp(b));
-
-    //         let mouse_down_on_item = Arc::new(Mutex::new(false));
-    //         let dragging = Arc::new(Mutex::new(false));
-    //         let start_pos = Arc::new(Mutex::new(Vector2::new(0.0, 0.0)));
-    //         let last_pos = Arc::new(Mutex::new(Vector2::new(0.0, 0.0)));
-
-    //         // // let mut attrs_cache: Vec<AttributeType> = item.get_stats().get_all_attributes().keys().cloned().collect();
-    //         // // attrs_cache.sort();
-    //         // let mut el = TextureRect::new_alloc();
-    //         // el.set_size(Vector2::new(32.0, 32.0));
-
-    //         // match item.get_texture() {
-    //         //     ItemTexture::None => {
-    //         //         el.set_texture(&image_to_texture(MISSING_TEXTURE.clone()).unwrap());
-    //         //     },
-    //         //     ItemTexture::Image(img) => {
-    //         //         el.set_texture(&image_to_texture(img).unwrap());
-    //         //     }
-    //         //     ItemTexture::Animated(atlas, frame_properties, animation_type) => {
-    //         //         let (texture, timer) = anim_to_texture(atlas, frame_properties, animation_type).unwrap();
-                    
-    //         //         el.set_texture(&texture);
-    //         //         el.add_child(&timer);
-    //         //     }
-
-    //         // }
-
-    //         // el.clone().connect("mouse_entered", &Callable::from_local_fn("_on_mouse_entered", {
-    //         //     let mut stats = stats.clone();  
-    //         //     let mut el = el.clone();
-    //         //     let mut attrs = attrs.clone();
-    //         //     move |_| {
-    //         //         el.set_modulate(Color::from_rgb(0.75, 0.75, 0.75));
-    //         //         attrs.get_children().iter_shared().for_each(|child| {
-    //         //             attrs.remove_child(&child);
-    //         //         });
-                    
-    //         //         stats.set_text("");
-
-    //         //         statbox_cache.iter().for_each(|(attr, value)| {
-    //         //             let mut label = Label::new_alloc();
-
-    //         //             label.set_custom_minimum_size(Vector2::new(32.0, 32.0));
-    //         //             label.set_text(&attr.into_text().to_bbcode_string());
-    //         //             label.set_mouse_filter(MouseFilter::STOP);
-    //         //             label.set_h_size_flags(SizeFlags::EXPAND_FILL);
-    //         //             label.set_v_size_flags(SizeFlags::SHRINK_CENTER);
-    //         //             label.set_vertical_alignment(VerticalAlignment::CENTER);
-    //         //             label.set_horizontal_alignment(HorizontalAlignment::CENTER);
-
-
-    //         //             label.clone().connect("mouse_entered", &Callable::from_local_fn("_on_mouse_entered", {
-    //         //                 let mut label = label.clone();
-    //         //                 let mut stats = stats.clone();
-    //         //                 let value = value.clone();
-    //         //                 move |_| {
-    //         //                     label.set_modulate(Color::from_rgb(0.75, 0.75, 0.75));
-    //         //                     stats.set_text(&value.to_bbcode_string());
-    //         //                     godot_print!("Stats go here: {:?}", value.to_bbcode_string());
-    //         //                     Ok(Variant::nil())
-    //         //                 }
-    //         //             }));
-
-    //         //             label.clone().connect("mouse_exited", &Callable::from_local_fn("_on_mouse_exited", {
-    //         //                 let mut label = label.clone();
-    //         //                 let mut stats = stats.clone();
-    //         //                 move |_| {
-    //         //                     label.set_modulate(Color::from_rgb(1.0, 1.0, 1.0));
-    //         //                     stats.set_text("");
-    //         //                     Ok(Variant::nil())
-    //         //                 }
-    //         //             }));
-
-    //         //             attrs.add_child(&label);
-    //         //         });
-    //         //         Ok(Variant::nil())
-    //         //     }
-    //         // }));
-
-    //         // el.clone().connect("mouse_exited", &Callable::from_local_fn("_on_mouse_exited", {
-    //         //     let mut el = el.clone();
-    //         //     let mouse_down_on_item = mouse_down_on_item.clone();
-    //         //     move |_| {
-
-    //         //         if *mouse_down_on_item.lock().unwrap() {
-    //         //             // mouse moving faster than the item, don't trigger the mouse exit event
-    //         //             return Ok(Variant::nil());
-    //         //         }   
-    //         //         el.set_modulate(Color::from_rgb(1.0, 1.0, 1.0));
-    //         //         Ok(Variant::nil())
-    //         //     }
-    //         // }));
-
-    //         // el.clone().connect("gui_input", &Callable::from_local_fn("_on_mouse_button", {
-    //         //     let item = item.clone();
-    //         //     let mut el = el.clone();
-    //         //     let mouse_down_on_item = mouse_down_on_item.clone();
-    //         //     let dragging = dragging.clone();
-    //         //     let slot_position_field = slot_position_field.clone();
-    //         //     move |v| {
-    //         //         if let Ok(evt) = v[0].try_to::<Gd<InputEventMouseButton>>() {
-    //         //             *mouse_down_on_item.lock().unwrap() = evt.is_pressed();
-    //         //             *start_pos.lock().unwrap() = evt.get_position();
-
-    //         //             if (*dragging.lock().unwrap() && !*mouse_down_on_item.lock().unwrap()) {
-    //         //                 // stop dragging
-    //         //                 *dragging.lock().unwrap() = false;
-    //         //                 let closest_slot = slot_position_field.iter().enumerate().min_by(|(_, a), (_, b)| {
-    //         //                     let a = a.distance_to(evt.get_position());
-    //         //                     let b = b.distance_to(evt.get_position());
-    //         //                     a.partial_cmp(&b).unwrap()
-    //         //                 }).unwrap().0;
-
-    //         //                 godot_print!("Closest slot: {:?}", closest_slot);
-    //         //             }
-    //         //         }
-
-    //         //         if *mouse_down_on_item.lock().unwrap() || *dragging.lock().unwrap() {
-    //         //             if let Ok(evt) = v[0].try_to::<Gd<InputEventMouseMotion>>() {
-    //         //                 if !evt.get_relative().is_zero_approx() {
-    //         //                     *dragging.lock().unwrap() = true;
-    //         //                     let viewport = el.get_viewport().unwrap();
-    //         //                     let mouse_pos = viewport.get_mouse_position() - pos - el.get_rect().size / 2.0;
-
-    //         //                     godot_print!("Mouse pos {:?}", mouse_pos);
-    //         //                     godot_print!("Start pos {:?}", start_pos.lock().unwrap());
-    //         //                     godot_print!("Relative pos {:?}", evt.get_relative());
-
-    //         //                     *last_pos.lock().unwrap() = mouse_pos;
-    //         //                     el.set_position(mouse_pos);
-    //         //                 }
-    //         //             }
-    //         //         }
-
-    //         //         //                            let drop_pos = evt.get_position();
-
-    //         //         // let closest_slot = slot_position_field.iter().enumerate().min_by(|(_, a), (_, b)| {
-    //         //         //     // let a = a.distance_to(drop_pos);
-    //         //         //     // let b = b.distance_to(drop_pos);
-    //         //         //     let a = a.distance_squared_to(drop_pos); // slightly faster
-    //         //         //     let b = b.distance_squared_to(drop_pos);
-    //         //         //     a.partial_cmp(&b).unwrap()
-    //         //         // }).unwrap().0;
-
-    //         //         Ok(Variant::nil())
-    //         //     }
-    //         // }));
-
-    //         let mut el = InventoryItem::new(item.clone());
-
-    //         el.connect("request_rerender", &Callable::from_local_fn("_on_request_rerender", {
-    //             move |_| {
-    //                 let mut inventory = INVENTORY.lock().unwrap();
-    //                 inventory.refresh();
-    //                 Ok(Variant::nil())
-    //             }
-    //         }));
-    //         // el.set_item(item.clone());
-
-    //         grid.add_child(&el);
-
-    //         slot_position_field.push(el.get_canvas_transform().affine_inverse() * el.get_position());
-    // });
     }
 }
 
@@ -764,7 +739,6 @@ impl IPanel for Inventory {
         Self {
             base,
             grid: None,
-            attrs: None,
             stats: None,
             receiver: None,
         }
@@ -809,12 +783,6 @@ impl IPanel for Inventory {
 
         let mut grid = InventoryContainer::new_alloc();
 
-        // let mut grid = GridContainer::new_alloc();
-
-        // grid.set_columns(4);
-        // grid.add_theme_constant_override("v_separation", 4);
-        // grid.add_theme_constant_override("h_separation", 4);
-
         grid_margin.add_child(&grid);
 
         let mut attr_margin = MarginContainer::new_alloc();
@@ -826,27 +794,31 @@ impl IPanel for Inventory {
 
         content_box.add_child(&attr_margin);
 
-        let mut attr_scroll = ScrollContainer::new_alloc();
-        attr_scroll.set_h_size_flags(SizeFlags::EXPAND_FILL);
-        attr_scroll.set_v_size_flags(SizeFlags::EXPAND_FILL);
-
-        // attr_scroll.get_v_scroll_bar().unwrap().set_modulate(Color::from_rgba(0.0, 0.0, 0.0, 0.0));
-        let mut scrollbar = attr_scroll.get_v_scroll_bar().unwrap();
-        scrollbar.set_modulate(Color::from_rgba(0.0, 0.0, 0.0, 0.5));
-        scrollbar.set_custom_minimum_size(Vector2::new(2.0, 0.0));
-        scrollbar.set_anchor_and_offset(Side::TOP, 0.0, 0.0);
-        scrollbar.set_anchor_and_offset(Side::BOTTOM, 1.0, 0.0);
-        scrollbar.set_anchor_and_offset(Side::RIGHT, 1.0, 0.0);
-        scrollbar.set_anchor_and_offset(Side::LEFT, 1.0, -2.0);
+        let mut attr_scroll = StatsScroller::new_alloc();
         
         attr_margin.add_child(&attr_scroll);
 
-        let mut attr_box = VBoxContainer::new_alloc();
-        attr_box.set_h_size_flags(SizeFlags::EXPAND_FILL);
-        attr_box.set_v_size_flags(SizeFlags::EXPAND_FILL);
-        attr_box.add_theme_constant_override("separation", 4);
+        // let mut attr_scroll = ScrollContainer::new_alloc();
+        // attr_scroll.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        // attr_scroll.set_v_size_flags(SizeFlags::EXPAND_FILL);
 
-        attr_scroll.add_child(&attr_box);
+        // // attr_scroll.get_v_scroll_bar().unwrap().set_modulate(Color::from_rgba(0.0, 0.0, 0.0, 0.0));
+        // let mut scrollbar = attr_scroll.get_v_scroll_bar().unwrap();
+        // scrollbar.set_modulate(Color::from_rgba(0.0, 0.0, 0.0, 0.5));
+        // scrollbar.set_custom_minimum_size(Vector2::new(2.0, 0.0));
+        // scrollbar.set_anchor_and_offset(Side::TOP, 0.0, 0.0);
+        // scrollbar.set_anchor_and_offset(Side::BOTTOM, 1.0, 0.0);
+        // scrollbar.set_anchor_and_offset(Side::RIGHT, 1.0, 0.0);
+        // scrollbar.set_anchor_and_offset(Side::LEFT, 1.0, -2.0);
+        
+        // attr_margin.add_child(&attr_scroll);
+
+        // let mut attr_box = VBoxContainer::new_alloc();
+        // attr_box.set_h_size_flags(SizeFlags::EXPAND_FILL);
+        // attr_box.set_v_size_flags(SizeFlags::EXPAND_FILL);
+        // attr_box.add_theme_constant_override("separation", 4);
+
+        // attr_scroll.add_child(&attr_box);
 
         let mut stats_margin = MarginContainer::new_alloc();
         stats_margin.add_theme_constant_override("margin_top", 2);
@@ -861,15 +833,28 @@ impl IPanel for Inventory {
 
         grid.clone().connect("change_active_item", &Callable::from_local_fn("change_active_item", {
             let mut stats = stats.clone();
+            let mut attr_scroll = attr_scroll.clone();
             let mut grid = grid.clone();
             move |_| {
                 let grid = grid.bind_mut();
                 let item = INVENTORY.lock().unwrap().get_item(grid.get_active_item() as usize).cloned().unwrap_or_else(|_| Air::new_itemstack());
-                stats.bind_mut().set_item(item);
+                stats.bind_mut().set_item(item.clone());
                 stats.bind_mut().set_display(StatDisplay::Summary);
 
                 stats.emit_signal("request_rerender", &[]);
 
+                attr_scroll.bind_mut().set_item(item);
+
+                Ok(Variant::nil())
+            }
+        }));
+
+        attr_scroll.clone().connect("change_display", &Callable::from_local_fn("change_display", {
+            let mut stats = stats.clone();
+            move |_| {
+                stats.bind_mut().set_display(attr_scroll.bind().get_display());
+
+                stats.emit_signal("request_rerender", &[]);
                 Ok(Variant::nil())
             }
         }));
@@ -881,7 +866,6 @@ impl IPanel for Inventory {
 
         self.grid = Some(grid);
         self.stats = Some(stats);
-        self.attrs = Some(attr_box);
         self.render();
 
         let (sender, receiver) = std::sync::mpsc::channel();

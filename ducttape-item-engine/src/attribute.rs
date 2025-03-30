@@ -9,6 +9,15 @@ pub enum AttributeReason {
     Display(String),
 }
 
+pub const ALL_ATTRIBUTE_TYPES: [AttributeType; 6] = [
+    AttributeType::Sharpness,
+    AttributeType::Durability,
+    AttributeType::Weight,
+    AttributeType::Strength,
+    AttributeType::Agility,
+    AttributeType::Reach,
+];
+
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, Debug, serde::Deserialize)]
 pub enum AttributeType {
     /// How much damage the item can deal
